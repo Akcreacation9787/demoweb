@@ -6,7 +6,7 @@ import { Shield, TrendingUp, Users, Wallet, ArrowRight, Globe, Zap } from "lucid
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen overflow-x-hidden bg-white">
       {/* Nav */}
       <header className="sticky top-0 z-20 border-b bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -23,11 +23,11 @@ export default function Landing() {
       <section className="relative overflow-hidden bg-[#062D66] text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-[#062D66] via-[#0756A5] to-[#0876E8] opacity-90" />
         <div className="absolute -top-20 -right-20 h-[600px] w-[600px] rounded-full bg-white/10 blur-3xl" />
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-2 md:py-24">
-          <div>
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-2 lg:py-24">
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold tracking-wide"><Zap className="h-4 w-4 text-amber-300" /> TRUSTED BY 50,000+ INVESTORS</div>
-            <h1 className="mt-6 text-4xl font-extrabold leading-tight md:text-5xl">Premium Financial Growth with <span className="text-[#00B6E7]">ATER KOMPANY</span></h1>
-            <p className="mt-4 max-w-xl text-white/80">Navy-blue reliability, white-glove service. Track investments, referrals, earnings and withdrawals in one secure dashboard. Configurable calculations, audit trails and instant notifications.</p>
+            <h1 className="mt-6 text-4xl font-extrabold leading-tight lg:text-5xl">Premium Financial Growth with <span className="break-words text-[#00B6E7]">ATER KOMPANY</span></h1>
+            <p className="mt-4 max-w-xl break-words text-white/80">Navy-blue reliability, white-glove service. Track investments, referrals, earnings and withdrawals in one secure dashboard. Configurable calculations, audit trails and instant notifications.</p>
             <div className="mt-8 flex flex-wrap gap-3"><Link href="/register"><Button size="lg" className="bg-white text-[#062D66] hover:bg-slate-100">Create Account <ArrowRight className="ml-2 h-4 w-4" /></Button></Link><Link href="/login"><Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">View Demo</Button></Link></div>
             <div className="mt-8 flex items-center gap-6 text-sm text-white/70"><span className="flex items-center gap-2"><Shield className="h-4 w-4" /> Bank-grade security</span><span className="flex items-center gap-2"><Globe className="h-4 w-4" /> Tamil + English</span></div>
           </div>

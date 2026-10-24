@@ -17,16 +17,16 @@ export async function PUT(req: NextRequest) {
   const auth = getUserFromRequest(req);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const data = await req.json();
-  const { name, phone, address, city, country, bankName, bankAccount, upiId } = data;
+  const { name, phone, address, addressLine2, city, state, country, postalCode, bankName, bankAccount, upiId } = data;
   if (name) await db.update(users).set({ name, phone: phone || null, updatedAt: new Date() }).where(eq(users.id, auth.userId));
   else if (phone) await db.update(users).set({ phone }).where(eq(users.id, auth.userId));
 
   const existing = await db.select().from(userProfiles).where(eq(userProfiles.userId, auth.userId)).limit(1);
   if (existing.length) {
-    await db.update(userProfiles).set({ address, city, country, bankName, bankAccount, upiId, updatedAt: new Date() }).where(eq(userProfiles.userId, auth.userId));
+    await db.update(userProfiles).set({ address, addressLine2, city, state, country, postalCode, bankName, bankAccount, upiId, updatedAt: new Date() }).where(eq(userProfiles.userId, auth.userId));
   } else {
-    await db.insert(userProfiles).values({ id: generateId(), userId: auth.userId, address, city, country, bankName, bankAccount, upiId });
+    await db.insert(userProfiles).values({ id: generateId(), userId: auth.userId, address, addressLine2, city, state, country, postalCode, bankName, bankAccount, upiId });
   }
-  await db.insert(auditLogs).values({ id: generateId(), actorId: auth.userId, action: "update_profile", entity: "user", entityId: auth.userId, details: { name, city } });
+  await db.insert(auditLogs).values({ id: generateId(), actorId: auth.userId, action: "update_profile", entity: "user", entityId: auth.userId, details: { name, address, city, state, country, postalCode } });
   return NextResponse.json({ success: true });
 }

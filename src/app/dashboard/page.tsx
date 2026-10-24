@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [active, setActive] = useState("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dash, setDash] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [tx, setTx] = useState<any[]>([]);
   const [team, setTeam] = useState<any>(null);
   const [investments, setInvestments] = useState<any[]>([]);
@@ -45,6 +46,8 @@ export default function DashboardPage() {
   const fetchAll = async () => {
     const d = await fetchJson<any>("/api/v1/dashboard");
     setDash(d);
+    const profileData = await fetchJson<any>("/api/v1/profile");
+    setProfile(profileData.profile || null);
     const tr = await fetchJson<any>("/api/v1/transactions?limit=50");
     setTx(tr.transactions || []);
     const te = await fetchJson<any>("/api/v1/team");
@@ -493,13 +496,16 @@ export default function DashboardPage() {
             <div className="grid gap-6 lg:grid-cols-2">
               <Card><CardHeader><CardTitle>{t("Profile & Settings","சுயவிவரம் & அமைப்புகள்")}</CardTitle></CardHeader>
                 <CardContent>
-                  <form onSubmit={async e=>{ e.preventDefault(); const fd=new FormData(e.currentTarget as HTMLFormElement); const res=await fetch("/api/v1/profile",{ method:"PUT", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ name: fd.get("name"), phone: fd.get("phone"), city: fd.get("city"), bankName: fd.get("bankName"), bankAccount: fd.get("bankAccount"), upiId: fd.get("upiId") }) }); if (res.ok) alert(t("Profile updated","சுயவிவரம் புதுப்பிக்கப்பட்டது")); fetchAll(); }} className="space-y-3">
+                  <form onSubmit={async e=>{ e.preventDefault(); const fd=new FormData(e.currentTarget as HTMLFormElement); const res=await fetch("/api/v1/profile",{ method:"PUT", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ name: fd.get("name"), phone: fd.get("phone"), address: fd.get("address"), addressLine2: fd.get("addressLine2"), city: fd.get("city"), state: fd.get("state"), country: fd.get("country"), postalCode: fd.get("postalCode"), bankName: fd.get("bankName"), bankAccount: fd.get("bankAccount"), upiId: fd.get("upiId") }) }); if (res.ok) alert(t("Profile updated","சுயவிவரம் புதுப்பிக்கப்பட்டது")); fetchAll(); }} className="space-y-3">
                     <div><Label>{t("Full Name","முழு பெயர்")}</Label><Input name="name" defaultValue={user.name} /></div>
                     <div><Label>Email</Label><Input defaultValue={user.email} disabled /></div>
                     <div><Label>{t("Phone","தொலைபேசி")}</Label><Input name="phone" defaultValue={user.phone || ""} /></div>
-                    <div><Label>{t("City","நகரம்")}</Label><Input name="city" placeholder="Chennai" /></div>
-                    <div className="grid grid-cols-2 gap-3"><div><Label>{t("Bank Name","வங்கி பெயர்")}</Label><Input name="bankName" placeholder="ICICI Bank" /></div><div><Label>{t("Account","கணக்கு")}</Label><Input name="bankAccount" placeholder="XXXX-..." /></div></div>
-                    <div><Label>UPI ID</Label><Input name="upiId" placeholder="name@upi" /></div>
+                    <div><Label>Address line 1</Label><Input name="address" autoComplete="address-line1" defaultValue={profile?.address || ""} placeholder="House / street address" /></div>
+                    <div><Label>Address line 2</Label><Input name="addressLine2" autoComplete="address-line2" defaultValue={profile?.addressLine2 || ""} placeholder="Apartment, building, landmark" /></div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><Label>{t("City","நகரம்")}</Label><Input name="city" autoComplete="address-level2" defaultValue={profile?.city || ""} placeholder="Chennai" /></div><div><Label>State / Province</Label><Input name="state" autoComplete="address-level1" defaultValue={profile?.state || ""} placeholder="Tamil Nadu" /></div></div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><Label>Country</Label><Input name="country" autoComplete="country-name" defaultValue={profile?.country || ""} placeholder="India" /></div><div><Label>Postal code</Label><Input name="postalCode" autoComplete="postal-code" defaultValue={profile?.postalCode || ""} placeholder="600001" /></div></div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><div><Label>{t("Bank Name","வங்கி பெயர்")}</Label><Input name="bankName" defaultValue={profile?.bankName || ""} placeholder="ICICI Bank" /></div><div><Label>{t("Account","கணக்கு")}</Label><Input name="bankAccount" defaultValue={profile?.bankAccount || ""} placeholder="XXXX-..." /></div></div>
+                    <div><Label>UPI ID</Label><Input name="upiId" defaultValue={profile?.upiId || ""} placeholder="name@upi" /></div>
                     <Button type="submit" className="w-full bg-[#062D66]">{t("Save Changes","மாற்றங்களை சேமி")}</Button>
                   </form>
                 </CardContent>
