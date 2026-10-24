@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, CreditCard, FileText, Settings, ArrowLeft, Check, X, Clock, Download } from "lucide-react";
+import { Users, CreditCard, FileText, Settings, ArrowLeft, Check, X, Clock, Download } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { fetchJson } from "@/lib/api";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -40,14 +41,14 @@ export default function AdminPage() {
     if (res.ok) { alert("Updated"); load(); } else alert("Failed");
   };
 
-  if (loading) return <div className="min-h-screen grid place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0F2540] border-t-transparent" /></div>;
+  if (loading) return <div className="min-h-screen grid place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#062D66] border-t-transparent" /></div>;
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-[#F1F5F9]">
-      <div className="bg-[#0F2540] text-white px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3"><Shield className="h-6 w-6" /><span className="font-bold">ATER KOMPANY — Admin Panel</span><Badge className="bg-white/20 text-white border-white/30">{user.role}</Badge></div>
-        <div className="flex items-center gap-2"><Button variant="outline" size="sm" onClick={()=>router.push("/dashboard")} className="bg-white text-[#0F2540]"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Button></div>
+      <div className="bg-[#062D66] text-white px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3"><BrandLogo variant="mark" className="h-10 w-10" /><span className="font-bold">ATER KOMPANY — Admin Panel</span><Badge className="bg-white/20 text-white border-white/30">{user.role}</Badge></div>
+        <div className="flex items-center gap-2"><Button variant="outline" size="sm" onClick={()=>router.push("/dashboard")} className="bg-white text-[#062D66]"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Button></div>
       </div>
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex gap-2 mb-6 overflow-x-auto">
@@ -57,7 +58,7 @@ export default function AdminPage() {
             { id:"withdrawals", label:"Withdrawal Queue", icon: CreditCard },
             { id:"config", label:"Config & Audit", icon: Settings },
           ].map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium border ${tab===t.id ? "bg-[#0F2540] text-white border-[#0F2540]" : "bg-white hover:bg-slate-50"}`}><t.icon className="h-4 w-4" />{t.label}</button>
+            <button key={t.id} onClick={()=>setTab(t.id)} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium border ${tab===t.id ? "bg-[#062D66] text-white border-[#062D66]" : "bg-white hover:bg-slate-50"}`}><t.icon className="h-4 w-4" />{t.label}</button>
           ))}
         </div>
 
@@ -111,7 +112,7 @@ export default function AdminPage() {
             <Card><CardHeader><CardTitle>Calculation Configuration</CardTitle></CardHeader><CardContent className="space-y-3 text-sm">
               <div className="rounded-xl border p-3"><div className="font-semibold">Standard Daily 1.6%</div><div className="text-xs text-slate-500">Rate 1.60% daily • Min ₹10,000 • Approved v1</div><div className="text-xs text-amber-600 mt-2">Example only — not financial advice. Requires legal review before payout.</div></div>
               <div className="rounded-xl border p-3"><div className="font-semibold">Premium 0.50% Compound</div><div className="text-xs text-slate-500">Rate 0.50% daily • Min ₹50,000 • Approved v1</div></div>
-              <Button className="w-full bg-[#0F2540]">Manage Configurations (audit-logged)</Button>
+              <Button className="w-full bg-[#062D66]">Manage Configurations (audit-logged)</Button>
             </CardContent></Card>
             <Card><CardHeader><CardTitle>System & Backup</CardTitle></CardHeader><CardContent className="space-y-3 text-sm">
               <div className="rounded-xl bg-slate-50 p-3"><div className="font-semibold">Backup & Recovery</div><div className="text-xs text-slate-600 mt-1">pg_dump daily • Point-in-time recovery • Restore: psql $DATABASE_URL &lt; backup.sql</div></div>

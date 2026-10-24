@@ -3,7 +3,273 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
+}
+
+model User {
+  id                                                               String                 @id @db.VarChar(36)
+  email                                                            String                 @unique(map: "users_email_uq") @db.VarChar(255)
+  passwordHash                                                     String                 @map("password_hash") @db.Text
+  name                                                             String                 @db.VarChar(255)
+  phone                                                            String?                @db.VarChar(50)
+  role                                                             Role                   @default(user)
+  accountStatus                                                    AccountStatus          @default(active) @map("account_status")
+  referralCode                                                     String                 @unique(map: "users_referral_code_uq") @map("referral_code") @db.VarChar(12)
+  referredBy                                                       String?                @map("referred_by") @db.VarChar(36)
+  avatar                                                           String?                @db.Text
+  language                                                         String?                @default("en") @db.VarChar(10)
+  darkMode                                                         Boolean?               @default(false) @map("dark_mode")
+  emailVerified                                                    Boolean?               @default(false) @map("email_verified")
+  twoFactorEnabled                                                 Boolean?               @default(false) @map("two_factor_enabled")
+  createdAt                                                        DateTime               @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt                                                        DateTime               @default(now()) @map("updated_at") @db.Timestamp(0)
+  audit_logs                                                       AuditLog[]
+  calculation_history                                              CalculationHistory[]
+  investment_records                                               InvestmentRecord[]
+  ledger_entries                                                   LedgerEntry[]
+  notifications                                                    Notification[]
+  payment_orders                                                   PaymentOrder[]
+  referral_relationships_referral_relationships_referred_idTousers ReferralRelationship?  @relation("referral_relationships_referred_idTousers")
+  referral_relationships_referral_relationships_referrer_idTousers ReferralRelationship[] @relation("referral_relationships_referrer_idTousers")
+  sessions                                                         Session[]
+  support_tickets                                                  SupportTicket[]
+  user_profiles                                                    UserProfile?
+  wallet_accounts                                                  WalletAccount?
+  withdrawal_requests                                              WithdrawalRequest[]
+
+  @@index([referredBy])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @db.VarChar(36)
+  userId    String   @map("user_id") @db.VarChar(36)
+  token     String   @unique(map: "sessions_token_uq") @db.VarChar(512)
+  expiresAt DateTime @default(now()) @map("expires_at") @db.Timestamp(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  users     User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "sessions_user_fk")
+
+  @@index([userId], map: "sessions_user_idx")
+  @@map("sessions")
+}
+
+model UserProfile {
+  id          String   @id @db.VarChar(36)
+  userId      String   @unique(map: "user_profiles_user_uq") @map("user_id") @db.VarChar(36)
+  address     String?  @db.Text
+  city        String?  @db.VarChar(100)
+  country     String?  @db.VarChar(100)
+  postalCode  String?  @map("postal_code") @db.VarChar(20)
+  idNumber    String?  @map("id_number") @db.VarChar(50)
+  bankName    String?  @map("bank_name") @db.VarChar(100)
+  bankAccount String?  @map("bank_account") @db.VarChar(100)
+  upiId       String?  @map("upi_id") @db.VarChar(100)
+  panNumber   String?  @map("pan_number") @db.VarChar(20)
+  bio         String?  @db.Text
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamp(0)
+  users       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "user_profiles_user_fk")
+
+  @@map("user_profiles")
+}
+
+model ReferralRelationship {
+  id                                              String   @id @db.VarChar(36)
+  referrerId                                      String   @map("referrer_id") @db.VarChar(36)
+  referredId                                      String   @unique(map: "referral_referred_uq") @map("referred_id") @db.VarChar(36)
+  level                                           Int      @default(1)
+  createdAt                                       DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  users_referral_relationships_referred_idTousers User     @relation("referral_relationships_referred_idTousers", fields: [referredId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "referral_referred_fk")
+  users_referral_relationships_referrer_idTousers User     @relation("referral_relationships_referrer_idTousers", fields: [referrerId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "referral_referrer_fk")
+
+  @@index([referrerId], map: "referral_referrer_idx")
+  @@map("referral_relationships")
+}
+
+model WalletAccount {
+  id             String   @id @db.VarChar(36)
+  userId         String   @unique(map: "wallet_user_uq") @map("user_id") @db.VarChar(36)
+  balance        Decimal  @default(0.00) @db.Decimal(18, 2)
+  totalInvested  Decimal  @default(0.00) @map("total_invested") @db.Decimal(18, 2)
+  totalEarnings  Decimal  @default(0.00) @map("total_earnings") @db.Decimal(18, 2)
+  totalWithdrawn Decimal  @default(0.00) @map("total_withdrawn") @db.Decimal(18, 2)
+  currency       String   @default("INR") @db.VarChar(10)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp(0)
+  users          User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "wallet_user_fk")
+
+  @@map("wallet_accounts")
+}
+
+model LedgerEntry {
+  id               String            @id @db.VarChar(36)
+  referenceId      String            @unique(map: "ledger_reference_uq") @map("reference_id") @db.VarChar(32)
+  userId           String            @map("user_id") @db.VarChar(36)
+  type             TransactionType
+  amount           Decimal           @db.Decimal(18, 2)
+  currency         String            @default("INR") @db.VarChar(10)
+  status           TransactionStatus @default(completed)
+  description      String?           @db.Text
+  relatedReference String?           @map("related_reference") @db.VarChar(32)
+  metadata         String?           @db.LongText
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamp(0)
+  completedAt      DateTime?         @map("completed_at") @db.Timestamp(0)
+  users            User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ledger_user_fk")
+
+  @@index([userId, createdAt], map: "ledger_user_created_idx")
+  @@map("ledger_entries")
+}
+
+model InvestmentRecord {
+  id                String   @id @db.VarChar(36)
+  userId            String   @map("user_id") @db.VarChar(36)
+  amount            Decimal  @db.Decimal(18, 2)
+  planName          String   @map("plan_name") @db.VarChar(100)
+  ratePercent       Decimal  @map("rate_percent") @db.Decimal(5, 2)
+  durationDays      Int      @map("duration_days")
+  status            String   @default("active") @db.VarChar(20)
+  startDate         DateTime @default(now()) @map("start_date") @db.Timestamp(0)
+  endDate           DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @map("end_date") @db.Timestamp(0)
+  earningsGenerated Decimal  @default(0.00) @map("earnings_generated") @db.Decimal(18, 2)
+  ledgerReference   String?  @map("ledger_reference") @db.VarChar(32)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  users             User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "investments_user_fk")
+
+  @@index([userId], map: "investments_user_idx")
+  @@map("investment_records")
+}
+
+model WithdrawalRequest {
+  id              String           @id @db.VarChar(36)
+  userId          String           @map("user_id") @db.VarChar(36)
+  amount          Decimal          @db.Decimal(18, 2)
+  currency        String           @default("INR") @db.VarChar(10)
+  method          String           @default("bank_transfer") @db.VarChar(50)
+  destination     String?          @db.Text
+  status          WithdrawalStatus @default(pending)
+  reviewNote      String?          @map("review_note") @db.Text
+  reviewedBy      String?          @map("reviewed_by") @db.VarChar(36)
+  ledgerReference String?          @map("ledger_reference") @db.VarChar(32)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt       DateTime         @default(now()) @map("updated_at") @db.Timestamp(0)
+  completedAt     DateTime?        @map("completed_at") @db.Timestamp(0)
+  users           User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "withdrawals_user_fk")
+
+  @@index([userId, createdAt], map: "withdrawals_user_created_idx")
+  @@map("withdrawal_requests")
+}
+
+model CalculationConfig {
+  id                  String               @id @db.VarChar(36)
+  name                String               @db.VarChar(100)
+  ratePercent         Decimal              @map("rate_percent") @db.Decimal(5, 2)
+  ratePeriod          String               @default("daily") @map("rate_period") @db.VarChar(20)
+  minAmount           Decimal?             @default(0.00) @map("min_amount") @db.Decimal(18, 2)
+  maxAmount           Decimal?             @map("max_amount") @db.Decimal(18, 2)
+  effectiveFrom       DateTime             @default(now()) @map("effective_from") @db.Timestamp(0)
+  effectiveTo         DateTime?            @map("effective_to") @db.Timestamp(0)
+  eligibility         String?              @db.Text
+  roundingRule        String?              @default("standard") @map("rounding_rule") @db.VarChar(20)
+  version             Int                  @default(1)
+  approved            Boolean              @default(false)
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamp(0)
+  calculation_history CalculationHistory[]
+
+  @@map("calculation_configs")
+}
+
+model CalculationHistory {
+  id                  String             @id @db.VarChar(36)
+  userId              String             @map("user_id") @db.VarChar(36)
+  configId            String?            @map("config_id") @db.VarChar(36)
+  baseAmount          Decimal            @map("base_amount") @db.Decimal(18, 2)
+  ratePercent         Decimal            @map("rate_percent") @db.Decimal(5, 2)
+  calculatedAmount    Decimal            @map("calculated_amount") @db.Decimal(18, 2)
+  isSimulation        Boolean            @default(false) @map("is_simulation")
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamp(0)
+  calculation_configs CalculationConfig? @relation(fields: [configId], references: [id], onUpdate: Restrict, map: "calc_history_config_fk")
+  users               User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "calc_history_user_fk")
+
+  @@index([configId], map: "calc_history_config_fk")
+  @@index([userId], map: "calc_history_user_idx")
+  @@map("calculation_history")
+}
+
+model Notification {
+  id        String           @id @db.VarChar(36)
+  userId    String           @map("user_id") @db.VarChar(36)
+  type      NotificationType
+  title     String           @db.VarChar(255)
+  message   String           @db.Text
+  read      Boolean          @default(false)
+  link      String?          @db.Text
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamp(0)
+  users     User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "notifications_user_fk")
+
+  @@index([userId, createdAt], map: "notifications_user_created_idx")
+  @@map("notifications")
+}
+
+model SupportTicket {
+  id         String         @id @db.VarChar(36)
+  userId     String         @map("user_id") @db.VarChar(36)
+  subject    String         @db.VarChar(255)
+  message    String         @db.Text
+  status     TicketStatus   @default(open)
+  priority   TicketPriority @default(medium)
+  assignedTo String?        @map("assigned_to") @db.VarChar(36)
+  response   String?        @db.Text
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime       @default(now()) @map("updated_at") @db.Timestamp(0)
+  users      User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tickets_user_fk")
+
+  @@index([userId, createdAt], map: "tickets_user_created_idx")
+  @@map("support_tickets")
+}
+
+model AuditLog {
+  id        String   @id @db.VarChar(36)
+  actorId   String?  @map("actor_id") @db.VarChar(36)
+  action    String   @db.VarChar(100)
+  entity    String   @db.VarChar(100)
+  entityId  String?  @map("entity_id") @db.VarChar(36)
+  details   String?  @db.LongText
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  users     User?    @relation(fields: [actorId], references: [id], onUpdate: Restrict, map: "audit_actor_fk")
+
+  @@index([actorId, createdAt], map: "audit_actor_created_idx")
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id          String   @id @db.VarChar(36)
+  key         String   @unique(map: "system_settings_key_uq") @db.VarChar(100)
+  value       String   @db.Text
+  description String?  @db.Text
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamp(0)
+
+  @@map("system_settings")
+}
+
+model PaymentOrder {
+  id                String    @id @db.VarChar(36)
+  userId            String    @map("user_id") @db.VarChar(36)
+  provider          String    @default("razorpay") @db.VarChar(32)
+  providerOrderId   String    @unique(map: "payment_provider_order_uq") @map("provider_order_id") @db.VarChar(64)
+  providerPaymentId String?   @unique(map: "payment_provider_payment_uq") @map("provider_payment_id") @db.VarChar(64)
+  signature         String?   @db.Text
+  amount            Decimal   @db.Decimal(18, 2)
+  currency          String    @default("INR") @db.VarChar(10)
+  status            String    @default("created") @db.VarChar(20)
+  planName          String    @map("plan_name") @db.VarChar(100)
+  ratePercent       Decimal   @map("rate_percent") @db.Decimal(5, 2)
+  durationDays      Int       @map("duration_days")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  paidAt            DateTime? @map("paid_at") @db.Timestamp(0)
+  users             User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "payment_orders_user_fk")
+
+  @@index([userId], map: "payment_orders_user_idx")
+  @@map("payment_orders")
 }
 
 enum Role {
@@ -85,230 +351,4 @@ enum TicketPriority {
   urgent
 
   @@map("ticket_priority")
-}
-
-model User {
-  id               String        @id @db.VarChar(36)
-  email            String        @unique @db.VarChar(255)
-  passwordHash     String        @map("password_hash")
-  name             String        @db.VarChar(255)
-  phone            String?       @db.VarChar(50)
-  role             Role          @default(user)
-  accountStatus    AccountStatus @default(active) @map("account_status")
-  referralCode     String        @unique @map("referral_code") @db.VarChar(12)
-  referredBy       String?       @map("referred_by") @db.VarChar(36)
-  avatar           String?
-  language         String?       @default("en") @db.VarChar(10)
-  darkMode         Boolean?      @default(false) @map("dark_mode")
-  emailVerified    Boolean?      @default(false) @map("email_verified")
-  twoFactorEnabled Boolean?      @default(false) @map("two_factor_enabled")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @default(now()) @map("updated_at")
-
-  @@map("users")
-}
-
-model Session {
-  id        String   @id @db.VarChar(36)
-  userId    String   @map("user_id") @db.VarChar(36)
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("sessions")
-}
-
-model UserProfile {
-  id          String   @id @db.VarChar(36)
-  userId      String   @unique @map("user_id") @db.VarChar(36)
-  address     String?
-  city        String?  @db.VarChar(100)
-  country     String?  @db.VarChar(100)
-  postalCode  String?  @map("postal_code") @db.VarChar(20)
-  idNumber    String?  @map("id_number") @db.VarChar(50)
-  bankName    String?  @map("bank_name") @db.VarChar(100)
-  bankAccount String?  @map("bank_account") @db.VarChar(100)
-  upiId       String?  @map("upi_id") @db.VarChar(100)
-  panNumber   String?  @map("pan_number") @db.VarChar(20)
-  bio         String?
-  updatedAt   DateTime @default(now()) @map("updated_at")
-
-  @@map("user_profiles")
-}
-
-model ReferralRelationship {
-  id         String   @id @db.VarChar(36)
-  referrerId String   @map("referrer_id") @db.VarChar(36)
-  referredId String   @unique @map("referred_id") @db.VarChar(36)
-  level      Int      @default(1)
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@map("referral_relationships")
-}
-
-model WalletAccount {
-  id             String   @id @db.VarChar(36)
-  userId         String   @unique @map("user_id") @db.VarChar(36)
-  balance        Decimal  @default(0) @db.Decimal(18, 2)
-  totalInvested  Decimal  @default(0) @map("total_invested") @db.Decimal(18, 2)
-  totalEarnings  Decimal  @default(0) @map("total_earnings") @db.Decimal(18, 2)
-  totalWithdrawn Decimal  @default(0) @map("total_withdrawn") @db.Decimal(18, 2)
-  currency       String   @default("INR") @db.VarChar(10)
-  updatedAt      DateTime @default(now()) @map("updated_at")
-
-  @@map("wallet_accounts")
-}
-
-model LedgerEntry {
-  id               String            @id @db.VarChar(36)
-  referenceId      String            @unique @map("reference_id") @db.VarChar(32)
-  userId           String            @map("user_id") @db.VarChar(36)
-  type             TransactionType
-  amount           Decimal           @db.Decimal(18, 2)
-  currency         String            @default("INR") @db.VarChar(10)
-  status           TransactionStatus @default(completed)
-  description      String?
-  relatedReference String?           @map("related_reference") @db.VarChar(32)
-  metadata         Json?
-  createdAt        DateTime          @default(now()) @map("created_at")
-  completedAt      DateTime?         @map("completed_at")
-
-  @@map("ledger_entries")
-}
-
-model InvestmentRecord {
-  id                String   @id @db.VarChar(36)
-  userId            String   @map("user_id") @db.VarChar(36)
-  amount            Decimal  @db.Decimal(18, 2)
-  planName          String   @map("plan_name") @db.VarChar(100)
-  ratePercent       Decimal  @map("rate_percent") @db.Decimal(5, 2)
-  durationDays      Int      @map("duration_days")
-  status            String   @default("active") @db.VarChar(20)
-  startDate         DateTime @map("start_date")
-  endDate           DateTime @map("end_date")
-  earningsGenerated Decimal  @default(0) @map("earnings_generated") @db.Decimal(18, 2)
-  ledgerReference   String?  @map("ledger_reference") @db.VarChar(32)
-  createdAt         DateTime @default(now()) @map("created_at")
-
-  @@map("investment_records")
-}
-
-model WithdrawalRequest {
-  id              String           @id @db.VarChar(36)
-  userId          String           @map("user_id") @db.VarChar(36)
-  amount          Decimal          @db.Decimal(18, 2)
-  currency        String           @default("INR") @db.VarChar(10)
-  method          String           @default("bank_transfer") @db.VarChar(50)
-  destination     String?
-  status          WithdrawalStatus @default(pending)
-  reviewNote      String?          @map("review_note")
-  reviewedBy      String?          @map("reviewed_by") @db.VarChar(36)
-  ledgerReference String?          @map("ledger_reference") @db.VarChar(32)
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @default(now()) @map("updated_at")
-  completedAt     DateTime?        @map("completed_at")
-
-  @@map("withdrawal_requests")
-}
-
-model CalculationConfig {
-  id            String    @id @db.VarChar(36)
-  name          String    @db.VarChar(100)
-  ratePercent   Decimal   @map("rate_percent") @db.Decimal(5, 2)
-  ratePeriod    String    @default("daily") @map("rate_period") @db.VarChar(20)
-  minAmount     Decimal?  @default(0) @map("min_amount") @db.Decimal(18, 2)
-  maxAmount     Decimal?  @map("max_amount") @db.Decimal(18, 2)
-  effectiveFrom DateTime  @map("effective_from")
-  effectiveTo   DateTime? @map("effective_to")
-  eligibility   String?
-  roundingRule  String?   @default("standard") @map("rounding_rule") @db.VarChar(20)
-  version       Int       @default(1)
-  approved      Boolean   @default(false)
-  createdAt     DateTime  @default(now()) @map("created_at")
-
-  @@map("calculation_configs")
-}
-
-model CalculationHistory {
-  id               String   @id @db.VarChar(36)
-  userId           String   @map("user_id") @db.VarChar(36)
-  configId         String?  @map("config_id") @db.VarChar(36)
-  baseAmount       Decimal  @map("base_amount") @db.Decimal(18, 2)
-  ratePercent      Decimal  @map("rate_percent") @db.Decimal(5, 2)
-  calculatedAmount Decimal  @map("calculated_amount") @db.Decimal(18, 2)
-  isSimulation     Boolean  @default(false) @map("is_simulation")
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  @@map("calculation_history")
-}
-
-model Notification {
-  id        String           @id @db.VarChar(36)
-  userId    String           @map("user_id") @db.VarChar(36)
-  type      NotificationType
-  title     String           @db.VarChar(255)
-  message   String
-  read      Boolean          @default(false)
-  link      String?
-  createdAt DateTime         @default(now()) @map("created_at")
-
-  @@map("notifications")
-}
-
-model SupportTicket {
-  id         String         @id @db.VarChar(36)
-  userId     String         @map("user_id") @db.VarChar(36)
-  subject    String         @db.VarChar(255)
-  message    String
-  status     TicketStatus   @default(open)
-  priority   TicketPriority @default(medium)
-  assignedTo String?        @map("assigned_to") @db.VarChar(36)
-  response   String?
-  createdAt  DateTime       @default(now()) @map("created_at")
-  updatedAt  DateTime       @default(now()) @map("updated_at")
-
-  @@map("support_tickets")
-}
-
-model AuditLog {
-  id        String   @id @db.VarChar(36)
-  actorId   String?  @map("actor_id") @db.VarChar(36)
-  action    String   @db.VarChar(100)
-  entity    String   @db.VarChar(100)
-  entityId  String?  @map("entity_id") @db.VarChar(36)
-  details   Json?
-  ipAddress String?  @map("ip_address") @db.VarChar(45)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("audit_logs")
-}
-
-model SystemSetting {
-  id          String   @id @db.VarChar(36)
-  key         String   @unique @db.VarChar(100)
-  value       String
-  description String?
-  updatedAt   DateTime @default(now()) @map("updated_at")
-
-  @@map("system_settings")
-}
-
-model PaymentOrder {
-  id                String    @id @db.VarChar(36)
-  userId            String    @map("user_id") @db.VarChar(36)
-  provider          String    @default("razorpay") @db.VarChar(32)
-  providerOrderId   String    @unique @map("provider_order_id") @db.VarChar(64)
-  providerPaymentId String?   @unique @map("provider_payment_id") @db.VarChar(64)
-  signature         String?
-  amount            Decimal   @db.Decimal(18, 2)
-  currency          String    @default("INR") @db.VarChar(10)
-  status            String    @default("created") @db.VarChar(20)
-  planName          String    @map("plan_name") @db.VarChar(100)
-  ratePercent       Decimal   @map("rate_percent") @db.Decimal(5, 2)
-  durationDays      Int       @map("duration_days")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
-  paidAt            DateTime? @map("paid_at")
-
-  @@map("payment_orders")
 }

@@ -1,8 +1,8 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Wallet, Users, Network, TrendingUp, CreditCard, ArrowUpRight, FileText, Bell, Ticket, Settings, Shield, LogOut, Menu, X, Calculator, Building2 } from "lucide-react";
+import { LayoutDashboard, Wallet, Users, Network, TrendingUp, CreditCard, ArrowUpRight, FileText, Bell, Ticket, Settings, Shield, LogOut, Menu, X, Calculator } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { usePathname } from "next/navigation";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -26,10 +26,10 @@ export function Sidebar({ active, onChange, mobileOpen, setMobileOpen }: { activ
     <>
       {/* Mobile overlay */}
       {mobileOpen && <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={()=>setMobileOpen(false)} />}
-      <aside className={cn("fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-[#0F2540] text-white transition-transform lg:translate-x-0", mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")}>
+      <aside className={cn("fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-[#062D66] text-white transition-transform lg:translate-x-0", mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")}>
         <div className="flex h-16 items-center justify-between px-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#0F2540] font-black text-sm tracking-tight">ATER</div>
+            <BrandLogo variant="mark" className="h-10 w-10" />
             <div>
               <div className="text-sm font-bold leading-none tracking-wide">ATER KOMPANY</div>
               <div className="text-[10px] tracking-widest text-white/60">FINANCIAL GROUP</div>
@@ -40,10 +40,10 @@ export function Sidebar({ active, onChange, mobileOpen, setMobileOpen }: { activ
 
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {navItems.map(item => (
-            <button key={item.id} onClick={()=>{ onChange(item.id); setMobileOpen(false); }} className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition", active===item.id ? "bg-white text-[#0F2540] shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white")}>
+            <button key={item.id} onClick={()=>{ onChange(item.id); setMobileOpen(false); }} className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition", active===item.id ? "bg-white text-[#062D66] shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white")}>
               <item.icon className="h-4 w-4 shrink-0" />
               {item.label}
-              {item.id==="notifications" && <span className="ml-auto bg-[#2563EB] text-white text-xs px-2 py-0.5 rounded-full">5</span>}
+              {item.id==="notifications" && <span className="ml-auto bg-[#0876E8] text-white text-xs px-2 py-0.5 rounded-full">5</span>}
             </button>
           ))}
           {isAdmin && (
@@ -74,7 +74,7 @@ export function Sidebar({ active, onChange, mobileOpen, setMobileOpen }: { activ
 export function MobileTopBar({ onMenu }: { onMenu: ()=>void }) {
   return (
     <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-white px-4 lg:hidden">
-      <div className="flex items-center gap-2"><Building2 className="h-6 w-6 text-[#0F2540]" /><span className="font-bold text-[#0F2540]">ATER KOMPANY</span></div>
+      <div className="flex items-center gap-2"><BrandLogo variant="mark" className="h-9 w-9 border border-slate-200" /><span className="font-bold text-[#062D66]">ATER KOMPANY</span></div>
       <button onClick={onMenu} className="rounded-lg border p-2"><Menu className="h-5 w-5" /></button>
     </div>
   );

@@ -4,7 +4,7 @@ Premium full-stack financial platform with navy-blue sidebar, ledger-accurate ac
 
 ## Technology
 - Next.js 16 (App Router) + React 19 + Tailwind 4
-- PostgreSQL + Prisma ORM/Studio integration (existing application queries remain compatible with Drizzle during migration)
+- MariaDB/MySQL with Drizzle ORM for application queries and Drizzle Studio for database inspection
 - JWT (HttpOnly cookie) + bcryptjs
 - Recharts + Lucide React
 - Drizzle Kit migrations
@@ -15,7 +15,7 @@ Premium full-stack financial platform with navy-blue sidebar, ledger-accurate ac
 npm install
 cp .env.example .env  # set DATABASE_URL and JWT_SECRET
 npm run db:push
-curl -X POST http://localhost:3000/api/seed   # seed demo data
+npm run db:seed   # seed demo data directly into DATABASE_URL
 npm run dev   # http://localhost:3000
 ```
 
@@ -50,7 +50,11 @@ All under `/api/v1/` with auth middleware (cookie or Bearer), rate-limit boundar
 ## Database
 Tables: users, sessions, user_profiles, referral_relationships, wallet_accounts, ledger_entries (NUMERIC), investment_records, withdrawal_requests, calculation_configs/history, notifications, support_tickets, audit_logs, system_settings.
 
-Schema: `prisma/schema.prisma` → `npm run db:push`. Inspect data with `npm run db:studio`.
+The app, `npm run db:push`, and `npm run db:studio` use the Drizzle schema in `src/db/schema.ts` and the same `DATABASE_URL`. The checked-in MySQL-compatible schema supports MariaDB 10.4.32 and MySQL 8.0.16+. The initial SQL migration preserves existing tables. Prisma Studio 7.10.1 still bundles a MySQL-only metadata query that fails on MariaDB 10.4, so use `npm run db:studio` for this database.
+
+Registration collects address and identity details and accepts PDF/JPG/PNG proof files up to 5 MB. Create a **private** Supabase Storage bucket named `id-proofs` (or set `ID_PROOFS_BUCKET`) and set `SUPABASE_URL` plus the server-only `SUPABASE_SECRET_KEY` before accepting registrations with proof uploads. Generate a 32-byte base64 key with `openssl rand -base64 32` and set it as `ID_NUMBER_ENCRYPTION_KEY`; ID numbers are encrypted before database storage. Apply the profile schema changes with `npm run db:push`.
+
+To send the generated member ID by WhatsApp, configure `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, and `WHATSAPP_TEMPLATE_NAME` for a WhatsApp Cloud API template with one body text parameter. Set `WHATSAPP_GRAPH_API_VERSION` to a version currently supported by your Meta app. Messages are sent only when the customer opts in on registration. The government ID number and proof file are never sent by WhatsApp. If WhatsApp is not configured, registration still completes without sending a message.
 
 ## Razorpay payments
 Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `NEXT_PUBLIC_RAZORPAY_KEY_ID` in `.env` using Razorpay test keys. The investment screen creates an order on the server, verifies Razorpay's signature on the server, and atomically creates the payment, investment, ledger entry, and wallet update.
@@ -67,15 +71,15 @@ Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `NEXT_PUBLIC_RAZORPAY_KEY_ID` 
 
 ## Backup & Restore
 ```bash
-pg_dump $DATABASE_URL > backup_$(date +%F).sql
-psql $DATABASE_URL < backup.sql
+mysqldump -u root -p ater > backup.sql
+mysql -u root -p ater < backup.sql
 ```
 Documented in Admin → Config & Audit.
 
 ## Deployment
-1. Set DATABASE_URL, JWT_SECRET in production env
+1. Set DATABASE_URL to the existing MySQL/MariaDB database and set JWT_SECRET in production env
 2. Run `npm run db:push` against the production database
-3. `npm run build && npm start` (or Vercel/Render/Fly with Postgres)
+3. `npm run build && npm start` (or Vercel/Render/Fly with a MySQL-compatible service)
 4. Health: GET /api/health → { ok:true }
 5. HTTPS via provider (Vercel auto, or Nginx + certbot)
 

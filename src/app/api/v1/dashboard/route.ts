@@ -23,13 +23,21 @@ export async function GET(req: NextRequest) {
   // notifications unread
   const unreadNotifs = await db.select().from(notifications).where(eq(notifications.userId, auth.userId)).limit(20);
 
-  // chart data: last 7 days earnings
+  // Chart data: ledger-verified earnings and investment records for the last 7 days.
   const chartData: any[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0,0,0,0);
     const next = new Date(d); next.setDate(next.getDate()+1);
     const dayEarnings = allLedger.filter(l => l.type === "earning" && l.createdAt && new Date(l.createdAt) >= d && new Date(l.createdAt) < next).reduce((s,l)=>s+parseFloat(l.amount),0);
-    chartData.push({ date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), earnings: dayEarnings, investments: Math.round(Math.random()*5000+2000) });
+    const dayInvestments = investments
+      .filter(inv => inv.createdAt && new Date(inv.createdAt) >= d && new Date(inv.createdAt) < next)
+      .map(inv => ({ product: inv.planName, amount: Number(inv.amount) || 0 }));
+    chartData.push({
+      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      earnings: dayEarnings,
+      investments: dayInvestments.reduce((sum, inv) => sum + inv.amount, 0),
+      investmentDetails: dayInvestments,
+    });
   }
 
   const user = await db.select().from(users).where(eq(users.id, auth.userId)).limit(1);

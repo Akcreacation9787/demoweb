@@ -1,8 +1,10 @@
-import { db, pool } from "@/db";
-import { users, walletAccounts, userProfiles, ledgerEntries, investmentRecords, referralRelationships, notifications, supportTickets, withdrawalRequests, calculationConfigs, calculationHistory, auditLogs, systemSettings, sessions } from "@/db/schema";
+import { db } from "@/db";
+import { users, walletAccounts, userProfiles, ledgerEntries, investmentRecords, referralRelationships, notifications, supportTickets, withdrawalRequests, calculationConfigs, calculationHistory, auditLogs, systemSettings, sessions, paymentOrders } from "@/db/schema";
 import { hashPassword, generateId, generateReferenceId, signToken } from "@/lib/auth";
 
 export async function seedDemoData() {
+  return db.transaction(async (tx) => {
+  const db = tx;
   // Check if already seeded
   const existing = await db.select().from(users).limit(1);
   if (existing.length > 0) return { seeded: false, reason: "already seeded" };
@@ -168,11 +170,21 @@ export async function seedDemoData() {
     { amount: "200000.00", status: "created", plan: "Growth Plan - 0.50%", rate: "0.50", days: 180, age: 2 },
   ].entries()) {
     const createdAt = new Date(Date.now() - payment.age * 86400000);
-    await pool.query(
-      `INSERT INTO payment_orders (id, user_id, provider, provider_order_id, amount, currency, status, plan_name, rate_percent, duration_days, created_at, updated_at, paid_at)
-       VALUES ($1, $2, 'razorpay', $3, $4, 'INR', $5, $6, $7, $8, $9, $9, $10)`,
-      [generateId(), demoId, `order_demo_${index + 1}`, payment.amount, payment.status, payment.plan, payment.rate, payment.days, createdAt, payment.status === "paid" ? createdAt : null],
-    );
+    await db.insert(paymentOrders).values({
+      id: generateId(),
+      userId: demoId,
+      provider: "razorpay",
+      providerOrderId: `order_demo_${index + 1}`,
+      amount: payment.amount,
+      currency: "INR",
+      status: payment.status,
+      planName: payment.plan,
+      ratePercent: payment.rate,
+      durationDays: payment.days,
+      createdAt,
+      updatedAt: createdAt,
+      paidAt: payment.status === "paid" ? createdAt : null,
+    });
   }
 
   const sessionToken = signToken({ userId: demoId, email: "demo@aterkompany.com", role: "user" });
@@ -186,4 +198,5 @@ export async function seedDemoData() {
   await db.insert(systemSettings).values({ id: generateId(), key: "currency", value: "INR", description: "Default platform currency", updatedAt: new Date() });
 
   return { seeded: true, demoId, adminId, accounts: ["demo@aterkompany.com / Demo@123", "admin@aterkompany.com / Admin@123", "finance@aterkompany.com / Finance@123", "support@aterkompany.com / Support@123", ...teamNames.map((_, i) => `team${i + 1}@demo.com / Team@123`)] };
+  });
 }

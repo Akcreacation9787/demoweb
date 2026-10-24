@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/mysql2";
+import { createPool, type Pool } from "mysql2/promise";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -7,18 +7,14 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required");
 }
 
-const globalForDb = globalThis as typeof globalThis & {
-  __arenaNextJsPostgresqlPool?: Pool;
-};
+const globalForDb = globalThis as typeof globalThis & { __aterMysqlPool?: Pool };
 
 export const pool =
-  globalForDb.__arenaNextJsPostgresqlPool ??
-  new Pool({
-    connectionString: databaseUrl,
-  });
+  globalForDb.__aterMysqlPool ??
+  createPool(databaseUrl);
 
 if (process.env.NODE_ENV !== "production") {
-  globalForDb.__arenaNextJsPostgresqlPool = pool;
+  globalForDb.__aterMysqlPool = pool;
 }
 
 export const db = drizzle(pool);

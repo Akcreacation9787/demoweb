@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { fetchJson } from "@/lib/api";
 
 type User = { id: string; email: string; name: string; role: string; referralCode: string; phone?: string };
-type AuthCtx = { user: User | null; loading: boolean; login: (email:string,password:string)=>Promise<User>; register:(data:any)=>Promise<void>; logout:()=>Promise<void>; refresh:()=>Promise<void> };
+type AuthCtx = { user: User | null; loading: boolean; login: (email:string,password:string)=>Promise<User>; register:(data:FormData)=>Promise<{ whatsappSent: boolean }>; logout:()=>Promise<void>; refresh:()=>Promise<void> };
 
 const Ctx = createContext<AuthCtx>(null as any);
 
@@ -25,9 +25,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
     return data.user as User;
   };
-  const register = async (data:any) => {
-    const jd = await fetchJson<{ user: User }>("/api/v1/auth/register", { method: "POST", headers: { "Content-Type":"application/json" }, body: JSON.stringify(data) });
+  const register = async (data:FormData) => {
+    const jd = await fetchJson<{ user: User; whatsappSent: boolean }>("/api/v1/auth/register", { method: "POST", body: data });
     setUser(jd.user);
+    return { whatsappSent: jd.whatsappSent };
   };
   const logout = async () => {
     await fetch("/api/v1/auth/logout", { method:"POST" });

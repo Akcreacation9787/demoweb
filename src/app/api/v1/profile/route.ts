@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const u = await db.select().from(users).where(eq(users.id, auth.userId)).limit(1);
   const p = await db.select().from(userProfiles).where(eq(userProfiles.userId, auth.userId)).limit(1);
-  return NextResponse.json({ user: u[0], profile: p[0] });
+  const safeProfile = p[0] ? { ...p[0], idNumber: undefined } : null;
+  return NextResponse.json({ user: u[0], profile: safeProfile });
 }
 export async function PUT(req: NextRequest) {
   const auth = getUserFromRequest(req);

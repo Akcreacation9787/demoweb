@@ -67,7 +67,7 @@ export default function DashboardPage() {
     return ()=>clearInterval(id);
   }, [user]);
 
-  if (loading) return <div className="min-h-screen grid place-items-center bg-[#F1F5F9]"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0F2540] border-t-transparent" /></div>;
+  if (loading) return <div className="min-h-screen grid place-items-center bg-[#F1F5F9]"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#062D66] border-t-transparent" /></div>;
   if (!user) return null;
 
   const copyReferral = () => {
@@ -113,7 +113,7 @@ export default function DashboardPage() {
       const checkout = new window.Razorpay({
         key: order.keyId, amount: order.amount, currency: order.currency, name: order.name,
         description: order.description, order_id: order.orderId,
-        prefill: { name: user.name, email: user.email }, theme: { color: "#2563EB" },
+        prefill: { name: user.name, email: user.email }, theme: { color: "#0876E8" },
         handler: async (response: Record<string, string>) => {
           const verify = await fetch("/api/v1/payments/verify", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(response) });
           const result = await verify.json();
@@ -144,7 +144,7 @@ export default function DashboardPage() {
         {/* Top header */}
         <div className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-4 md:px-6">
           <div>
-            <h1 className="text-lg font-bold text-[#0F2540]">{active === "dashboard" ? t("Dashboard Overview","டாஷ்போர்டு") : active.replace("_"," ").replace(/\b\w/g,l=>l.toUpperCase())}</h1>
+            <h1 className="text-lg font-bold text-[#062D66]">{active === "dashboard" ? t("Dashboard Overview","டாஷ்போர்டு") : active.replace("_"," ").replace(/\b\w/g,l=>l.toUpperCase())}</h1>
             <p className="hidden text-xs text-slate-500 md:block">{t("Welcome back,","மீண்டும் வரவேற்கிறோம்,")} {user.name} • {formatDate(new Date().toString())}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -161,20 +161,20 @@ export default function DashboardPage() {
           {["admin","super_admin","finance_operator","support_agent"].includes(user.role) && (
             <button onClick={()=>router.push("/admin")} className="flex w-full items-center justify-between rounded-2xl border border-blue-200 bg-[#EFF6FF] px-5 py-3.5 text-left hover:bg-blue-100 transition">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0F2540] text-white text-xs font-black">A</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#062D66] text-white text-xs font-black">A</span>
                 <div>
-                  <div className="text-sm font-bold text-[#0F2540]">You are signed in as {user.role.replace("_"," ")}</div>
+                  <div className="text-sm font-bold text-[#062D66]">You are signed in as {user.role.replace("_"," ")}</div>
                   <div className="text-xs text-slate-500">This is the User View — open the Admin Console for management tools</div>
                 </div>
               </div>
-              <span className="rounded-xl bg-[#0F2540] px-4 py-2 text-xs font-bold text-white">Open Admin Console →</span>
+              <span className="rounded-xl bg-[#062D66] px-4 py-2 text-xs font-bold text-white">Open Admin Console →</span>
             </button>
           )}
           {/* DASHBOARD TAB */}
           {active==="dashboard" && dash && (
             <>
               <div className="grid gap-4 md:grid-cols-4">
-                <Card className="border-0 bg-[#0F2540] text-white overflow-hidden relative">
+                <Card className="border-0 bg-[#062D66] text-white overflow-hidden relative">
                   <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10" />
                   <CardContent className="p-5 relative">
                     <div className="flex items-center justify-between"><span className="text-xs tracking-widest text-white/70">{t("TOTAL INVESTMENT","மொத்த முதலீடு")}</span><Wallet className="h-5 w-5 text-white/60" /></div>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                     <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold"><TrendingUp className="h-3 w-3" /> {t("Recorded • Auditable","பதிவு செய்யப்பட்டது")}</div>
                   </CardContent>
                 </Card>
-                <Card className="border-0 bg-[#2563EB] text-white">
+                <Card className="border-0 bg-[#0876E8] text-white">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between"><span className="text-xs tracking-widest text-white/80">{t("RECORDED EARNINGS","பதிவு வருவாய்")}</span><TrendingUp className="h-5 w-5 text-white/70" /></div>
                     <div className="mt-3 text-2xl font-extrabold">{formatCurrency(dash.wallet.totalEarnings || "0")}</div>
@@ -191,8 +191,8 @@ export default function DashboardPage() {
                 </Card>
                 <Card>
                   <CardContent className="p-5">
-                    <div className="flex items-center justify-between"><span className="text-xs tracking-widest text-slate-500">{t("DIRECT MEMBERS","நேரடி உறுப்பினர்கள்")}</span><Users className="h-5 w-5 text-[#2563EB]" /></div>
-                    <div className="mt-3 text-2xl font-extrabold text-[#0F2540]">{dash.directCount}</div>
+                    <div className="flex items-center justify-between"><span className="text-xs tracking-widest text-slate-500">{t("DIRECT MEMBERS","நேரடி உறுப்பினர்கள்")}</span><Users className="h-5 w-5 text-[#0876E8]" /></div>
+                    <div className="mt-3 text-2xl font-extrabold text-[#062D66]">{dash.directCount}</div>
                     <div className="mt-2 text-xs text-slate-500">{t("4-direct view • Team","4-நேரடி பார்வை • குழு")} {dash.teamStats?.total || 0}</div>
                   </CardContent>
                 </Card>
@@ -211,10 +211,10 @@ export default function DashboardPage() {
                   <CardContent>
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={dash.chartData}><CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" /><XAxis dataKey="date" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} /><Tooltip /><Area type="monotone" dataKey="earnings" stroke="#2563EB" fill="#DBEAFE" strokeWidth={2} /><Area type="monotone" dataKey="investments" stroke="#0F2540" fill="#0F2540" fillOpacity={0.05} /></AreaChart>
+                        <AreaChart data={dash.chartData}><CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" /><XAxis dataKey="date" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} /><Tooltip formatter={(value: number | string, name: string) => [formatCurrency(value), name === "investments" ? t("Invested","முதலீடு") : t("Earnings","வருவாய்")]} labelFormatter={(label, payload) => { const details = payload?.[0]?.payload?.investmentDetails as Array<{ product: string; amount: number }> | undefined; return details?.length ? `${label} • ${details.map(item => `${item.product}: ${formatCurrency(item.amount)}`).join(", ")}` : label; }} /><Area type="monotone" dataKey="earnings" stroke="#0876E8" fill="#DBEAFE" strokeWidth={2} /><Area type="monotone" dataKey="investments" stroke="#062D66" fill="#062D66" fillOpacity={0.05} /></AreaChart>
                       </ResponsiveContainer>
                     </div>
-                    <p className="mt-2 text-xs text-slate-500">{t("Chart shows ledger-verified earnings. Simulations are labelled separately.","வரைபடம் லெட்ஜர்-சரிபார்க்கப்பட்ட வருவாயைக் காட்டுகிறது.")}</p>
+                    <p className="mt-2 text-xs text-slate-500">{t("Hover over the chart to see daily earnings and investment products with their amounts.","தினசரி வருவாய் மற்றும் முதலீட்டு தயாரிப்புகளையும் தொகைகளையும் பார்க்க வரைபடத்தின் மீது நகர்த்தவும்.")}</p>
                   </CardContent>
                 </Card>
 
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                   <CardHeader><CardTitle>{t("Referral Link","பரிந்துரை இணைப்பு")}</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="rounded-xl bg-[#F1F5F9] p-3 text-xs break-all border">{dash.referralLink}</div>
-                    <Button onClick={copyReferral} className="w-full bg-[#0F2540]"><Copy className="mr-2 h-4 w-4" />{t("Copy Link","இணைப்பை நகலெடு")}</Button>
+                    <Button onClick={copyReferral} className="w-full bg-[#062D66]"><Copy className="mr-2 h-4 w-4" />{t("Copy Link","இணைப்பை நகலெடு")}</Button>
                     <div className="rounded-xl border p-3">
                       <div className="text-xs font-semibold text-slate-600">{t("DIRECT MEMBERS (4)","நேரடி உறுப்பினர்கள் (4)")}</div>
                       <div className="mt-3 grid grid-cols-2 gap-2">
@@ -256,10 +256,10 @@ export default function DashboardPage() {
                   <CardContent className="space-y-3">
                     {dash.investments?.map((inv:any)=>(
                       <div key={inv.id} className="rounded-xl border p-4">
-                        <div className="flex items-center justify-between"><span className="font-semibold text-[#0F2540]">{inv.planName}</span><Badge variant={inv.status==="active"?"success":"warning"}>{inv.status}</Badge></div>
+                        <div className="flex items-center justify-between"><span className="font-semibold text-[#062D66]">{inv.planName}</span><Badge variant={inv.status==="active"?"success":"warning"}>{inv.status}</Badge></div>
                         <div className="mt-2 flex justify-between text-sm"><span className="text-slate-500">{t("Amount","தொகை")}</span><span className="font-bold">{formatCurrency(inv.amount)}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-slate-500">{t("Earnings","வருவாய்")}</span><span className="font-bold text-emerald-600">{formatCurrency(inv.earningsGenerated)}</span></div>
-                        <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-[#2563EB]" style={{ width: `${Math.min(100, (parseFloat(inv.earningsGenerated)/parseFloat(inv.amount))*100)}%` }} /></div>
+                        <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-[#0876E8]" style={{ width: `${Math.min(100, (parseFloat(inv.earningsGenerated)/parseFloat(inv.amount))*100)}%` }} /></div>
                       </div>
                     ))}
                     {(!dash.investments || dash.investments.length===0) && <div className="text-sm text-slate-500">{t("No investments — create one in Investment Records","முதலீடுகள் இல்லை")}</div>}
@@ -277,7 +277,7 @@ export default function DashboardPage() {
                   <form onSubmit={handleInvestment} className="grid gap-3 md:grid-cols-4 p-4 rounded-xl bg-[#F8FAFC] border">
                     <div><Label>{t("Plan Name","திட்ட பெயர்")}</Label><Select name="planName" defaultValue="Starter Plan - 1.6%"><option>Starter Plan - 1.6%</option><option>Growth Plan - 0.50%</option><option>Premium Plan - 1.2%</option></Select></div>
                     <div><Label>{t("Amount (INR)","தொகை")}</Label><Input name="amount" placeholder="100000" required /></div>
-                    <div className="flex items-end"><Button type="submit" disabled={paymentLoading} className="w-full bg-[#2563EB]"><Plus className="mr-2 h-4 w-4" />{paymentLoading ? t("Starting payment...","பணம் செலுத்துதல் தொடங்குகிறது...") : t("Pay & Invest","பணம் செலுத்தி முதலீடு செய்யுங்கள்")}</Button></div>
+                    <div className="flex items-end"><Button type="submit" disabled={paymentLoading} className="w-full bg-[#0876E8]"><Plus className="mr-2 h-4 w-4" />{paymentLoading ? t("Starting payment...","பணம் செலுத்துதல் தொடங்குகிறது...") : t("Pay & Invest","பணம் செலுத்தி முதலீடு செய்யுங்கள்")}</Button></div>
                     <div className="flex items-end text-xs text-slate-500">{t("Secure Razorpay checkout; investment activates after verification","பாதுகாப்பான Razorpay கட்டணம்; சரிபார்ப்புக்குப் பிறகு முதலீடு செயல்படும்")}</div>
                   </form>
                   <div className="mt-6 overflow-x-auto">
@@ -322,7 +322,7 @@ export default function DashboardPage() {
               <Card><CardHeader><CardTitle>{t("Referral Genealogy","பரிந்துரை வம்சாவளி")}</CardTitle><p className="text-xs text-slate-500">{t("Multi-level tree • self-referral & circular prevention enforced","பல-நிலை மரம்")}</p></CardHeader>
                 <CardContent>
                   <div className="flex flex-col items-center gap-4">
-                    <div className="rounded-2xl bg-[#0F2540] text-white px-6 py-4 text-center"><div className="text-xs opacity-70">{t("YOU","நீங்கள்")}</div><div className="font-bold">{user.name}</div><div className="text-xs opacity-70">{user.referralCode}</div></div>
+                    <div className="rounded-2xl bg-[#062D66] text-white px-6 py-4 text-center"><div className="text-xs opacity-70">{t("YOU","நீங்கள்")}</div><div className="font-bold">{user.name}</div><div className="text-xs opacity-70">{user.referralCode}</div></div>
                     <div className="h-6 w-0.5 bg-slate-200" />
                     <div className="flex flex-wrap justify-center gap-4">
                       {(team.tree?.level1 || team.members.filter((m:any)=>m.level===1)).slice(0,4).map((m:any)=>(
@@ -364,7 +364,7 @@ export default function DashboardPage() {
                 ))}</tbody></table>
                 {tx.filter(t=>t.type==="earning").length===0 && <div className="text-center py-8 text-slate-500">{t("No earnings yet","இன்னும் வருவாய் இல்லை")}</div>}
                 </div>
-                <div className="mt-6 h-48"><ResponsiveContainer width="100%" height="100%"><BarChart data={dash?.chartData || []}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis /><Tooltip /><Bar dataKey="earnings" fill="#10B981" radius={[6,6,0,0]} /></BarChart></ResponsiveContainer></div>
+                <div className="mt-6 h-48"><ResponsiveContainer width="100%" height="100%"><BarChart data={dash?.chartData || []}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" /><YAxis /><Tooltip /><Bar dataKey="earnings" fill="#19A53A" radius={[6,6,0,0]} /></BarChart></ResponsiveContainer></div>
               </CardContent>
             </Card>
           )}
@@ -391,7 +391,7 @@ export default function DashboardPage() {
                     <div><Label>{t("Amount","தொகை")}</Label><Input name="amount" placeholder="25000" required /></div>
                     <div><Label>{t("Method","முறை")}</Label><Select name="method"><option value="bank_transfer">Bank Transfer</option><option value="upi">UPI</option><option value="paypal">PayPal</option></Select></div>
                     <div><Label>{t("Destination","இலக்கு")}</Label><Input name="destination" placeholder="ICICI - 8899-0011 / rajesh@upi" /></div>
-                    <div className="flex items-end"><Button type="submit" className="w-full bg-[#0F2540]"><Send className="mr-2 h-4 w-4" />{t("Submit Request","கோரிக்கை அனுப்பு")}</Button></div>
+                    <div className="flex items-end"><Button type="submit" className="w-full bg-[#062D66]"><Send className="mr-2 h-4 w-4" />{t("Submit Request","கோரிக்கை அனுப்பு")}</Button></div>
                   </form>
                   <div className="mt-6">
                     <div className="flex items-center justify-between"><h4 className="font-semibold">{t("Withdrawal History","பணம் எடுத்த வரலாறு")}</h4><Badge variant="outline">{withdrawals.length}</Badge></div>
@@ -413,8 +413,8 @@ export default function DashboardPage() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card><CardHeader><CardTitle>{t("Transaction Reports","பரிவர்த்தனை அறிக்கைகள்")}</CardTitle></CardHeader><CardContent className="space-y-3">
                 <div className="rounded-xl bg-[#F8FAFC] p-4 flex items-center justify-between"><div><div className="font-semibold">{t("Monthly Ledger","மாதாந்திர லெட்ஜர்")}</div><div className="text-xs text-slate-500">{t("PDF & Excel export ready","PDF & Excel ஏற்றுமதி")}</div></div><Button variant="outline" onClick={()=>exportCSV(tx, "report.csv")}><Download className="mr-2 h-4 w-4" />CSV</Button></div>
-                <div className="h-40"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={[{name:"Investments",value: investments.length},{name:"Earnings",value: tx.filter(t=>t.type==="earning").length},{name:"Withdrawals",value: withdrawals.length}]} dataKey="value" cx="50%" cy="50%" outerRadius={60} fill="#0F2540"><Cell fill="#0F2540" /><Cell fill="#10B981" /><Cell fill="#2563EB" /></Pie><Tooltip /></PieChart></ResponsiveContainer></div>
-                <Button className="w-full bg-[#0F2540]" onClick={()=>exportCSV(tx, "transactions_export.csv")}>{t("Export Transactions (CSV)","பரிவர்த்தனைகளை ஏற்றுமதி")}</Button>
+                <div className="h-40"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={[{name:"Investments",value: investments.length},{name:"Earnings",value: tx.filter(t=>t.type==="earning").length},{name:"Withdrawals",value: withdrawals.length}]} dataKey="value" cx="50%" cy="50%" outerRadius={60} fill="#062D66"><Cell fill="#062D66" /><Cell fill="#19A53A" /><Cell fill="#0876E8" /></Pie><Tooltip /></PieChart></ResponsiveContainer></div>
+                <Button className="w-full bg-[#062D66]" onClick={()=>exportCSV(tx, "transactions_export.csv")}>{t("Export Transactions (CSV)","பரிவர்த்தனைகளை ஏற்றுமதி")}</Button>
               </CardContent></Card>
               <Card><CardHeader><CardTitle>{t("Team Reports","குழு அறிக்கைகள்")}</CardTitle></CardHeader><CardContent className="space-y-3">
                 <div className="rounded-xl border p-4"><div className="font-semibold">{t("Direct / Team Counts","நேரடி / குழு எண்ணிக்கை")}</div><div className="mt-2 text-2xl font-bold">{team?.total || 0} {t("total","மொத்தம்")}</div><div className="text-xs text-slate-500">{t("Level 1:","நிலை 1:")} {team?.members.filter((m:any)=>m.level===1).length || 0} • {t("Level 2:","நிலை 2:")} {team?.members.filter((m:any)=>m.level===2).length || 0}</div></div>
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                 <CardContent className="space-y-4">
                   <div><Label>{t("Base Amount (INR)","அடிப்படை தொகை")}</Label><Input value={calcForm.baseAmount} onChange={e=>setCalcForm({...calcForm, baseAmount:e.target.value})} /></div>
                   <div className="grid grid-cols-2 gap-3"><div><Label>{t("Rate % (daily)","விகிதம் %")}</Label><Input value={calcForm.ratePercent} onChange={e=>setCalcForm({...calcForm, ratePercent:e.target.value})} /></div><div><Label>{t("Days","நாட்கள்")}</Label><Input value={calcForm.days} onChange={e=>setCalcForm({...calcForm, days:e.target.value})} /></div></div>
-                  <Button onClick={handleCalc} className="w-full bg-[#2563EB]">{t("Calculate","கணக்கிடு")}</Button>
+                  <Button onClick={handleCalc} className="w-full bg-[#0876E8]">{t("Calculate","கணக்கிடு")}</Button>
                   {calcResult && <div className="rounded-xl bg-[#F0FDF4] border border-emerald-200 p-4"><div className="text-xs text-emerald-700">{t("Estimated Return","மதிப்பிடப்பட்ட வருவாய்")}</div><div className="text-2xl font-extrabold text-emerald-700">{formatCurrency(calcResult.result)}</div><div className="mt-2 text-xs text-slate-600">{calcResult.assumptions}</div><Badge variant="warning" className="mt-2">{t("SIMULATION — not real earnings","மதிப்பீடு — உண்மையான வருவாய் அல்ல")}</Badge></div>}
                 </CardContent>
               </Card>
@@ -450,7 +450,7 @@ export default function DashboardPage() {
               <CardContent className="space-y-3">
                 {notifications.map(n=>(
                   <div key={n.id} className={`flex items-start justify-between rounded-xl border p-4 ${n.read ? "bg-white" : "bg-[#EFF6FF] border-blue-200"}`}>
-                    <div><div className="font-semibold text-sm flex items-center gap-2"><Bell className="h-4 w-4 text-[#2563EB]" />{n.title} {!n.read && <Badge variant="success">{t("New","புதிய")}</Badge>}</div><div className="text-sm text-slate-600 mt-1">{n.message}</div><div className="text-xs text-slate-400 mt-1">{formatDateTime(n.createdAt)} • {n.type}</div></div>
+                    <div><div className="font-semibold text-sm flex items-center gap-2"><Bell className="h-4 w-4 text-[#0876E8]" />{n.title} {!n.read && <Badge variant="success">{t("New","புதிய")}</Badge>}</div><div className="text-sm text-slate-600 mt-1">{n.message}</div><div className="text-xs text-slate-400 mt-1">{formatDateTime(n.createdAt)} • {n.type}</div></div>
                     {!n.read && <Button size="sm" variant="outline" onClick={async()=>{ await fetch("/api/v1/notifications",{ method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ id:n.id }) }); fetchAll(); }}>{t("Read","படி")}</Button>}
                   </div>
                 ))}
@@ -468,7 +468,7 @@ export default function DashboardPage() {
                     <div><Label>{t("Subject","தலைப்பு")}</Label><Input name="subject" required /></div>
                     <div><Label>{t("Priority","முன்னுரிமை")}</Label><Select name="priority"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></Select></div>
                     <div><Label>{t("Message","செய்தி")}</Label><Textarea name="message" required /></div>
-                    <Button type="submit" className="w-full bg-[#0F2540]"><Send className="mr-2 h-4 w-4" />{t("Submit Ticket","டிக்கெட் அனுப்பு")}</Button>
+                    <Button type="submit" className="w-full bg-[#062D66]"><Send className="mr-2 h-4 w-4" />{t("Submit Ticket","டிக்கெட் அனுப்பு")}</Button>
                   </form>
                 </CardContent>
               </Card>
@@ -500,7 +500,7 @@ export default function DashboardPage() {
                     <div><Label>{t("City","நகரம்")}</Label><Input name="city" placeholder="Chennai" /></div>
                     <div className="grid grid-cols-2 gap-3"><div><Label>{t("Bank Name","வங்கி பெயர்")}</Label><Input name="bankName" placeholder="ICICI Bank" /></div><div><Label>{t("Account","கணக்கு")}</Label><Input name="bankAccount" placeholder="XXXX-..." /></div></div>
                     <div><Label>UPI ID</Label><Input name="upiId" placeholder="name@upi" /></div>
-                    <Button type="submit" className="w-full bg-[#0F2540]">{t("Save Changes","மாற்றங்களை சேமி")}</Button>
+                    <Button type="submit" className="w-full bg-[#062D66]">{t("Save Changes","மாற்றங்களை சேமி")}</Button>
                   </form>
                 </CardContent>
               </Card>

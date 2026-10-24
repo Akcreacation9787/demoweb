@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 export const metadata: Metadata = {
   title: "ATER KOMPANY — Financial Dashboard",
   description: "Premium financial dashboard for ATER KOMPANY",
+  icons: { icon: "/ater-kompany-mark.png", apple: "/ater-kompany-mark.png" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

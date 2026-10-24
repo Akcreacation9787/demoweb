@@ -11,5 +11,6 @@ export async function GET(req: NextRequest) {
   if (!u.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const wallet = await db.select().from(walletAccounts).where(eq(walletAccounts.userId, auth.userId)).limit(1);
   const profile = await db.select().from(userProfiles).where(eq(userProfiles.userId, auth.userId)).limit(1);
-  return NextResponse.json({ user: u[0], wallet: wallet[0] || null, profile: profile[0] || null });
+  const safeProfile = profile[0] ? { ...profile[0], idNumber: undefined } : null;
+  return NextResponse.json({ user: u[0], wallet: wallet[0] || null, profile: safeProfile });
 }

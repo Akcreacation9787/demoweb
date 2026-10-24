@@ -1,23 +1,23 @@
-import { pgTable, text, varchar, numeric, timestamp, boolean, integer, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { mysqlTable, text, varchar, decimal, timestamp, boolean, int, json, mysqlEnum } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
-export const roleEnum = pgEnum("role", ["user", "admin", "finance_operator", "support_agent", "super_admin"]);
-export const accountStatusEnum = pgEnum("account_status", ["active", "suspended", "pending_verification", "closed"]);
-export const txTypeEnum = pgEnum("tx_type", ["deposit", "investment", "earning", "referral_reward", "withdrawal", "refund", "adjustment", "fee"]);
-export const txStatusEnum = pgEnum("tx_status", ["pending", "completed", "failed", "reversed"]);
-export const withdrawalStatusEnum = pgEnum("withdrawal_status", ["pending", "under_review", "approved", "rejected", "processing", "completed"]);
-export const notificationTypeEnum = pgEnum("notification_type", ["registration", "referral", "transaction", "withdrawal", "support", "system"]);
-export const ticketStatusEnum = pgEnum("ticket_status", ["open", "in_progress", "resolved", "closed"]);
-export const ticketPriorityEnum = pgEnum("ticket_priority", ["low", "medium", "high", "urgent"]);
+const roleValues = ["user", "admin", "finance_operator", "support_agent", "super_admin"] as const;
+const accountStatusValues = ["active", "suspended", "pending_verification", "closed"] as const;
+const txTypeValues = ["deposit", "investment", "earning", "referral_reward", "withdrawal", "refund", "adjustment", "fee"] as const;
+const txStatusValues = ["pending", "completed", "failed", "reversed"] as const;
+const withdrawalStatusValues = ["pending", "under_review", "approved", "rejected", "processing", "completed"] as const;
+const notificationTypeValues = ["registration", "referral", "transaction", "withdrawal", "support", "system"] as const;
+const ticketStatusValues = ["open", "in_progress", "resolved", "closed"] as const;
+const ticketPriorityValues = ["low", "medium", "high", "urgent"] as const;
 
-export const users = pgTable("users", {
+export const users = mysqlTable("users", {
   id: varchar("id", { length: 36 }).primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 50 }),
-  role: roleEnum("role").notNull().default("user"),
-  accountStatus: accountStatusEnum("account_status").notNull().default("active"),
+  role: mysqlEnum("role", roleValues).notNull().default("user"),
+  accountStatus: mysqlEnum("account_status", accountStatusValues).notNull().default("active"),
   referralCode: varchar("referral_code", { length: 12 }).notNull().unique(),
   referredBy: varchar("referred_by", { length: 36 }),
   avatar: text("avatar"),
@@ -29,22 +29,26 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const sessions = pgTable("sessions", {
+export const sessions = mysqlTable("sessions", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
+  token: varchar("token", { length: 512 }).notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const userProfiles = pgTable("user_profiles", {
+export const userProfiles = mysqlTable("user_profiles", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().unique().references(() => users.id, { onDelete: "cascade" }),
   address: text("address"),
+  addressLine2: text("address_line_2"),
   city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 100 }),
   country: varchar("country", { length: 100 }),
   postalCode: varchar("postal_code", { length: 20 }),
-  idNumber: varchar("id_number", { length: 50 }),
+  idType: varchar("id_type", { length: 50 }),
+  idNumber: varchar("id_number", { length: 255 }),
+  idProofPath: varchar("id_proof_path", { length: 512 }),
   bankName: varchar("bank_name", { length: 100 }),
   bankAccount: varchar("bank_account", { length: 100 }),
   upiId: varchar("upi_id", { length: 100 }),
@@ -53,63 +57,63 @@ export const userProfiles = pgTable("user_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const referralRelationships = pgTable("referral_relationships", {
+export const referralRelationships = mysqlTable("referral_relationships", {
   id: varchar("id", { length: 36 }).primaryKey(),
   referrerId: varchar("referrer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
   referredId: varchar("referred_id", { length: 36 }).notNull().unique().references(() => users.id, { onDelete: "cascade" }),
-  level: integer("level").notNull().default(1),
+  level: int("level").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const walletAccounts = pgTable("wallet_accounts", {
+export const walletAccounts = mysqlTable("wallet_accounts", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().unique().references(() => users.id, { onDelete: "cascade" }),
-  balance: numeric("balance", { precision: 18, scale: 2 }).notNull().default("0.00"),
-  totalInvested: numeric("total_invested", { precision: 18, scale: 2 }).notNull().default("0.00"),
-  totalEarnings: numeric("total_earnings", { precision: 18, scale: 2 }).notNull().default("0.00"),
-  totalWithdrawn: numeric("total_withdrawn", { precision: 18, scale: 2 }).notNull().default("0.00"),
+  balance: decimal("balance", { precision: 18, scale: 2 }).notNull().default("0.00"),
+  totalInvested: decimal("total_invested", { precision: 18, scale: 2 }).notNull().default("0.00"),
+  totalEarnings: decimal("total_earnings", { precision: 18, scale: 2 }).notNull().default("0.00"),
+  totalWithdrawn: decimal("total_withdrawn", { precision: 18, scale: 2 }).notNull().default("0.00"),
   currency: varchar("currency", { length: 10 }).notNull().default("INR"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const ledgerEntries = pgTable("ledger_entries", {
+export const ledgerEntries = mysqlTable("ledger_entries", {
   id: varchar("id", { length: 36 }).primaryKey(),
   referenceId: varchar("reference_id", { length: 32 }).notNull().unique(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
-  type: txTypeEnum("type").notNull(),
-  amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+  type: mysqlEnum("type", txTypeValues).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 10 }).notNull().default("INR"),
-  status: txStatusEnum("status").notNull().default("completed"),
+  status: mysqlEnum("status", txStatusValues).notNull().default("completed"),
   description: text("description"),
   relatedReference: varchar("related_reference", { length: 32 }),
-  metadata: jsonb("metadata"),
+  metadata: json("metadata"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 });
 
-export const investmentRecords = pgTable("investment_records", {
+export const investmentRecords = mysqlTable("investment_records", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
-  amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
   planName: varchar("plan_name", { length: 100 }).notNull(),
-  ratePercent: numeric("rate_percent", { precision: 5, scale: 2 }).notNull(),
-  durationDays: integer("duration_days").notNull(),
+  ratePercent: decimal("rate_percent", { precision: 5, scale: 2 }).notNull(),
+  durationDays: int("duration_days").notNull(),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  earningsGenerated: numeric("earnings_generated", { precision: 18, scale: 2 }).notNull().default("0.00"),
+  earningsGenerated: decimal("earnings_generated", { precision: 18, scale: 2 }).notNull().default("0.00"),
   ledgerReference: varchar("ledger_reference", { length: 32 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const withdrawalRequests = pgTable("withdrawal_requests", {
+export const withdrawalRequests = mysqlTable("withdrawal_requests", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
-  amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 10 }).notNull().default("INR"),
   method: varchar("method", { length: 50 }).notNull().default("bank_transfer"),
   destination: text("destination"),
-  status: withdrawalStatusEnum("status").notNull().default("pending"),
+  status: mysqlEnum("status", withdrawalStatusValues).notNull().default("pending"),
   reviewNote: text("review_note"),
   reviewedBy: varchar("reviewed_by", { length: 36 }),
   ledgerReference: varchar("ledger_reference", { length: 32 }),
@@ -118,37 +122,37 @@ export const withdrawalRequests = pgTable("withdrawal_requests", {
   completedAt: timestamp("completed_at"),
 });
 
-export const calculationConfigs = pgTable("calculation_configs", {
+export const calculationConfigs = mysqlTable("calculation_configs", {
   id: varchar("id", { length: 36 }).primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
-  ratePercent: numeric("rate_percent", { precision: 5, scale: 2 }).notNull(),
+  ratePercent: decimal("rate_percent", { precision: 5, scale: 2 }).notNull(),
   ratePeriod: varchar("rate_period", { length: 20 }).notNull().default("daily"),
-  minAmount: numeric("min_amount", { precision: 18, scale: 2 }).default("0.00"),
-  maxAmount: numeric("max_amount", { precision: 18, scale: 2 }),
+  minAmount: decimal("min_amount", { precision: 18, scale: 2 }).default("0.00"),
+  maxAmount: decimal("max_amount", { precision: 18, scale: 2 }),
   effectiveFrom: timestamp("effective_from").notNull(),
   effectiveTo: timestamp("effective_to"),
   eligibility: text("eligibility"),
   roundingRule: varchar("rounding_rule", { length: 20 }).default("standard"),
-  version: integer("version").notNull().default(1),
+  version: int("version").notNull().default(1),
   approved: boolean("approved").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const calculationHistory = pgTable("calculation_history", {
+export const calculationHistory = mysqlTable("calculation_history", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
   configId: varchar("config_id", { length: 36 }).references(() => calculationConfigs.id),
-  baseAmount: numeric("base_amount", { precision: 18, scale: 2 }).notNull(),
-  ratePercent: numeric("rate_percent", { precision: 5, scale: 2 }).notNull(),
-  calculatedAmount: numeric("calculated_amount", { precision: 18, scale: 2 }).notNull(),
+  baseAmount: decimal("base_amount", { precision: 18, scale: 2 }).notNull(),
+  ratePercent: decimal("rate_percent", { precision: 5, scale: 2 }).notNull(),
+  calculatedAmount: decimal("calculated_amount", { precision: 18, scale: 2 }).notNull(),
   isSimulation: boolean("is_simulation").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const notifications = pgTable("notifications", {
+export const notifications = mysqlTable("notifications", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
-  type: notificationTypeEnum("type").notNull(),
+  type: mysqlEnum("type", notificationTypeValues).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
   read: boolean("read").notNull().default(false),
@@ -156,36 +160,54 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const supportTickets = pgTable("support_tickets", {
+export const supportTickets = mysqlTable("support_tickets", {
   id: varchar("id", { length: 36 }).primaryKey(),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
   subject: varchar("subject", { length: 255 }).notNull(),
   message: text("message").notNull(),
-  status: ticketStatusEnum("status").notNull().default("open"),
-  priority: ticketPriorityEnum("priority").notNull().default("medium"),
+  status: mysqlEnum("status", ticketStatusValues).notNull().default("open"),
+  priority: mysqlEnum("priority", ticketPriorityValues).notNull().default("medium"),
   assignedTo: varchar("assigned_to", { length: 36 }),
   response: text("response"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const auditLogs = pgTable("audit_logs", {
+export const auditLogs = mysqlTable("audit_logs", {
   id: varchar("id", { length: 36 }).primaryKey(),
   actorId: varchar("actor_id", { length: 36 }).references(() => users.id),
   action: varchar("action", { length: 100 }).notNull(),
   entity: varchar("entity", { length: 100 }).notNull(),
   entityId: varchar("entity_id", { length: 36 }),
-  details: jsonb("details"),
+  details: json("details"),
   ipAddress: varchar("ip_address", { length: 45 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const systemSettings = pgTable("system_settings", {
+export const systemSettings = mysqlTable("system_settings", {
   id: varchar("id", { length: 36 }).primaryKey(),
   key: varchar("key", { length: 100 }).notNull().unique(),
   value: text("value").notNull(),
   description: text("description"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const paymentOrders = mysqlTable("payment_orders", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  provider: varchar("provider", { length: 32 }).notNull().default("razorpay"),
+  providerOrderId: varchar("provider_order_id", { length: 64 }).notNull().unique(),
+  providerPaymentId: varchar("provider_payment_id", { length: 64 }).unique(),
+  signature: text("signature"),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 10 }).notNull().default("INR"),
+  status: varchar("status", { length: 20 }).notNull().default("created"),
+  planName: varchar("plan_name", { length: 100 }).notNull(),
+  ratePercent: decimal("rate_percent", { precision: 5, scale: 2 }).notNull(),
+  durationDays: int("duration_days").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  paidAt: timestamp("paid_at"),
 });
 
 // Relations
