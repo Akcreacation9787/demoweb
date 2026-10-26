@@ -12,7 +12,7 @@ export default function Landing() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <BrandLogo variant="full" className="h-[76px] w-[98px]" />
-            <div className="text-xs tracking-widest text-slate-500">FINANCIAL GROUP</div>
+            <div className="text-xs tracking-widest text-slate-500">Connect. Grow. Prosper.</div>
           </div>
           <div className="hidden items-center gap-6 md:flex text-sm font-medium text-slate-600"><a href="#features" className="hover:text-[#062D66]">Features</a><a href="#plans" className="hover:text-[#062D66]">Plans</a><a href="#security" className="hover:text-[#062D66]">Security</a></div>
           <div className="flex items-center gap-3"><Link href="/login"><Button variant="ghost">Login</Button></Link><Link href="/register"><Button className="bg-[#0876E8] hover:bg-[#0665C7]">Get Started</Button></Link></div>
@@ -26,9 +26,17 @@ export default function Landing() {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-2 lg:py-24">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold tracking-wide"><Zap className="h-4 w-4 text-amber-300" /> TRUSTED BY 50,000+ INVESTORS</div>
-            <h1 className="mt-6 text-4xl font-extrabold leading-tight lg:text-5xl">Premium Financial Growth with <span className="break-words text-[#00B6E7]">ATER KOMPANY</span></h1>
-            <p className="mt-4 max-w-xl break-words text-white/80">Navy-blue reliability, white-glove service. Track investments, referrals, earnings and withdrawals in one secure dashboard. Configurable calculations, audit trails and instant notifications.</p>
-            <div className="mt-8 flex flex-wrap gap-3"><Link href="/register"><Button size="lg" className="bg-white text-[#062D66] hover:bg-slate-100">Create Account <ArrowRight className="ml-2 h-4 w-4" /></Button></Link><Link href="/login"><Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">View Demo</Button></Link></div>
+            <h1 className="mt-6 text-4xl font-extrabold leading-tight lg:text-5xl">Driven by Trust. Defined by Growth. <span className="break-words text-[#00B6E7]">ATER KOMPANY</span></h1>
+            <p className="mt-4 max-w-xl space-y-1 break-words text-white/80">
+              <span className="block"><strong className="font-semibold text-white">Investment tracking:</strong> View balances, plans, and transaction history.</span>
+              <span className="block"><strong className="font-semibold text-white">Referral management:</strong> Monitor referral links, eligible commissions, and customer activity.</span>
+              <span className="block"><strong className="font-semibold text-white">Earnings ledger:</strong> Review calculated earnings with a clear breakdown of each entry.</span>
+              <span className="block"><strong className="font-semibold text-white">Withdrawals:</strong> Submit requests and track approval and payment status.</span>
+              <span className="block"><strong className="font-semibold text-white">Configurable calculations:</strong> Manage authorised rates, eligibility rules, and calculation periods.</span>
+              <span className="block"><strong className="font-semibold text-white">Audit trails:</strong> Record administrative changes and financial transactions.</span>
+              <span className="block"><strong className="font-semibold text-white">Notifications:</strong> Receive timely updates on transactions, verification, and withdrawals.</span>
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3"><Link href="/register"><Button size="lg" className="bg-white hover:bg-slate-100" style={{ color: "#062D66" }}>Create Account <ArrowRight className="ml-2 h-4 w-4" /></Button></Link><Link href="#how-it-works"><Button size="lg" variant="outline" className="border-white/40 hover:bg-white/10" style={{ backgroundColor: "transparent", color: "white" }}>View Demo</Button></Link></div>
             <div className="mt-8 flex items-center gap-6 text-sm text-white/70"><span className="flex items-center gap-2"><Shield className="h-4 w-4" /> Bank-grade security</span><span className="flex items-center gap-2"><Globe className="h-4 w-4" /> Tamil + English</span></div>
           </div>
           <Card className="border-0 bg-white p-0 shadow-2xl overflow-hidden">
@@ -60,6 +68,28 @@ export default function Landing() {
         </div>
       </section>
 
+      <section id="how-it-works" className="mx-auto max-w-7xl scroll-mt-24 px-6 py-16">
+        <div className="text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-[#0876E8]">Product demo</p>
+          <h2 className="mt-2 text-3xl font-bold text-[#062D66]">See how the platform works</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-slate-600">A quick walkthrough of the steps shown in your account dashboard.</p>
+        </div>
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+          {[
+            { step: "01", title: "Choose a plan", description: "Review the available plan details and enter the amount you want to record.", icon: Wallet },
+            { step: "02", title: "Complete verification", description: "Payments are verified before an investment record is activated.", icon: Shield },
+            { step: "03", title: "Track activity", description: "See investment records, ledger activity, referrals, and earnings in your dashboard.", icon: TrendingUp },
+          ].map(item => (
+            <Card key={item.step} className="p-6">
+              <div className="flex items-center justify-between"><span className="text-sm font-bold tracking-widest text-[#0876E8]">{item.step}</span><item.icon className="h-6 w-6 text-[#0876E8]" /></div>
+              <h3 className="mt-5 font-semibold text-[#062D66]">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+            </Card>
+          ))}
+        </div>
+        <p className="mt-5 text-center text-xs text-slate-500">Demo walkthrough only. Example calculations are simulations and are not guaranteed returns.</p>
+      </section>
+
       {/* Features */}
       <section id="features" className="mx-auto max-w-7xl px-6 py-16">
         <div className="text-center"><h2 className="text-3xl font-bold text-[#062D66]">Everything you need to grow</h2><p className="mx-auto mt-3 max-w-2xl text-slate-600">From referral genealogy to ledger-accurate earnings — ATER KOMPANY keeps every rupee auditable.</p></div>
@@ -79,12 +109,12 @@ export default function Landing() {
       <section id="plans" className="bg-[#F1F5F9] py-16">
         <div className="mx-auto max-w-7xl px-6">
           <h2 className="text-center text-3xl font-bold text-[#062D66]">Investment Plans (Example rates)</h2>
-          <p className="text-center text-sm text-slate-500 mt-2">1.6% and 0.50% shown as examples — not guaranteed daily returns. Review business terms before activation.</p>
+          <p className="text-center text-sm text-slate-500 mt-2">0.30% and 0.16% shown as examples — not guaranteed daily returns. Review business terms before activation.</p>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {[
-              { name:"Starter 1.6%", amt:"₹10,000 - ₹1,00,000", days:"90 days", color:"bg-[#062D66]" },
-              { name:"Growth 0.50%", amt:"₹50,000 - ₹50,00,000", days:"180 days", color:"bg-[#0876E8]" },
-              { name:"Premium 1.2%", amt:"₹2,00,000 - ₹50,00,000", days:"60 days", color:"bg-emerald-600" },
+              { name:"Starter 0.30%", amt:"₹10,000 - ₹1,00,000", days:"30 days", color:"bg-[#062D66]" },
+              { name:"Growth 0.50%", amt:"₹50,000 - ₹5,00,000", days:"30 days", color:"bg-[#0876E8]" },
+              { name:"Premium 0.16%", amt:"₹1,00,000 - ₹25,00,000", days:"30 days", color:"bg-emerald-600" },
             ].map(p=>(
               <Card key={p.name} className="overflow-hidden"><div className={`p-4 text-white ${p.color}`}><div className="text-sm opacity-80">{p.days}</div><div className="text-xl font-bold">{p.name}</div></div><CardContent className="pt-4"><div className="text-sm text-slate-600">{p.amt}</div><ul className="mt-3 space-y-2 text-sm text-slate-600 list-disc list-inside"><li>Daily calculation simulation</li><li>Manual verification for payouts</li><li>Audit trail & ledger entries</li></ul><Link href="/register"><Button className="mt-4 w-full">Select Plan</Button></Link></CardContent></Card>
             ))}

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { sql } from "drizzle-orm";
+import { db } from "@/db";
 export async function GET() {
   try {
-    const { error } = await supabase.from("users").select("id").limit(1);
-    if (error) throw error;
-    return NextResponse.json({ ok: true, app: "ATER KOMPANY", database: "supabase" });
+    await db.execute(sql`SELECT 1`);
+    return NextResponse.json({ ok: true, app: "ATER KOMPANY", database: "mysql" });
   } catch (e) {
-    console.error("Supabase health check failed", e);
-    return NextResponse.json({ ok: false, database: "supabase" }, { status: 503 });
+    console.error("MySQL health check failed", e);
+    return NextResponse.json({ ok: false, database: "mysql" }, { status: 503 });
   }
 }

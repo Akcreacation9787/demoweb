@@ -3,11 +3,6 @@ import { db } from "@/db";
 import { users, walletAccounts, userProfiles, referralRelationships, notifications } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword, signToken, generateId, generateReferralCode } from "@/lib/auth";
-import { createClient } from "@supabase/supabase-js";
-import { encryptIdNumber } from "@/lib/id-data";
-
-const allowedProofTypes = new Set(["application/pdf", "image/jpeg", "image/png"]);
-const maxProofSize = 5 * 1024 * 1024;
 
 async function sendMemberIdOnWhatsApp(phone: string, memberId: string) {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -48,40 +43,15 @@ export async function POST(req: NextRequest) {
     const state = String(form.get("state") || "").trim();
     const country = String(form.get("country") || "").trim();
     const postalCode = String(form.get("postalCode") || "").trim();
-    const idType = String(form.get("idType") || "").trim();
-    const idNumber = String(form.get("idNumber") || "").trim();
     const whatsappConsent = form.get("whatsappConsent") === "true";
-    const proof = form.get("idProof");
     if (!name || !email || !password) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     if (password.length < 6) return NextResponse.json({ error: "Password too short" }, { status: 400 });
-    if (!address || !city || !state || !country || !postalCode || !idType || !idNumber || !(proof instanceof File)) {
-      return NextResponse.json({ error: "Complete the address and identity fields and upload your ID proof" }, { status: 400 });
-    }
-    if (!allowedProofTypes.has(proof.type) || proof.size === 0 || proof.size > maxProofSize) {
-      return NextResponse.json({ error: "ID proof must be a PDF, JPG, or PNG no larger than 5 MB" }, { status: 400 });
+    if (!address || !city || !state || !country || !postalCode) {
+      return NextResponse.json({ error: "Complete the address fields" }, { status: 400 });
     }
     if (whatsappConsent && (!phone || !/^\+?[1-9]\d{7,14}$/.test(phone.replace(/[\s()-]/g, "")))) {
       return NextResponse.json({ error: "Enter a valid international phone number to receive your member ID on WhatsApp" }, { status: 400 });
     }
-    const proofBytes = new Uint8Array(await proof.arrayBuffer());
-    const hasPdfSignature = proofBytes[0] === 0x25 && proofBytes[1] === 0x50 && proofBytes[2] === 0x44 && proofBytes[3] === 0x46;
-    const hasPngSignature = proofBytes[0] === 0x89 && proofBytes[1] === 0x50 && proofBytes[2] === 0x4e && proofBytes[3] === 0x47;
-    const hasJpegSignature = proofBytes[0] === 0xff && proofBytes[1] === 0xd8 && proofBytes[2] === 0xff;
-    if ((proof.type === "application/pdf" && !hasPdfSignature) || (proof.type === "image/png" && !hasPngSignature) || (proof.type === "image/jpeg" && !hasJpegSignature)) {
-      return NextResponse.json({ error: "The uploaded file does not match its file type" }, { status: 400 });
-    }
-    let encryptedIdNumber: string;
-    try {
-      encryptedIdNumber = encryptIdNumber(idNumber);
-    } catch {
-      return NextResponse.json({ error: "Identity data encryption is not configured. Contact the site administrator." }, { status: 503 });
-    }
-    const storageUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const storageKey = process.env.SUPABASE_SECRET_KEY;
-    if (!storageUrl || !storageKey) {
-      return NextResponse.json({ error: "ID proof storage is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY." }, { status: 503 });
-    }
-
     const existing = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
     if (existing.length) return NextResponse.json({ error: "Email already registered" }, { status: 409 });
 
@@ -103,16 +73,6 @@ export async function POST(req: NextRequest) {
     const codeExists = await db.select().from(users).where(eq(users.referralCode, finalCode)).limit(1);
     if (codeExists.length) finalCode = generateReferralCode();
 
-    const bucket = process.env.ID_PROOFS_BUCKET || "id-proofs";
-    const proofExtension = proof.type === "application/pdf" ? "pdf" : proof.type === "image/png" ? "png" : "jpg";
-    const proofPath = `${id}/${generateId()}.${proofExtension}`;
-    const storage = createClient(storageUrl, storageKey, { auth: { persistSession: false, autoRefreshToken: false } });
-    const upload = await storage.storage.from(bucket).upload(proofPath, proof, { contentType: proof.type, upsert: false });
-    if (upload.error) {
-      console.error("ID proof upload failed:", upload.error.message);
-      return NextResponse.json({ error: "Could not securely upload ID proof. Check the private Supabase Storage bucket configuration." }, { status: 503 });
-    }
-
     await db.insert(users).values({
       id,
       email,
@@ -127,7 +87,7 @@ export async function POST(req: NextRequest) {
     await db.insert(walletAccounts).values({ id: generateId(), userId: id, balance: "0.00", totalInvested: "0.00", totalEarnings: "0.00", totalWithdrawn: "0.00" });
     await db.insert(userProfiles).values({
       id: generateId(), userId: id, address, addressLine2: addressLine2 || null,
-      city, state, country, postalCode, idType, idNumber: encryptedIdNumber, idProofPath: proofPath,
+      city, state, country, postalCode, idType: null, idNumber: null, idProofPath: null,
     });
 
     if (referrerId) {

@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch { setUser(null); }
     setLoading(false);
   };
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { void Promise.resolve().then(refresh); }, []);
 
   const login = async (email:string,password:string) => {
     const data = await fetchJson<{ user: User }>("/api/v1/auth/login", { method: "POST", headers: { "Content-Type":"application/json" }, body: JSON.stringify({ email,password }) });
@@ -31,7 +31,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { whatsappSent: jd.whatsappSent };
   };
   const logout = async () => {
-    await fetch("/api/v1/auth/logout", { method:"POST" });
+    const response = await fetch("/api/v1/auth/logout", { method:"POST", credentials: "include" });
+    if (!response.ok) throw new Error("Could not log out. Please try again.");
     setUser(null);
   };
   return <Ctx.Provider value={{ user, loading, login, register, logout, refresh }}>{children}</Ctx.Provider>;

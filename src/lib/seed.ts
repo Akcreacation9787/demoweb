@@ -109,7 +109,7 @@ export async function seedDemoData() {
 
   // Investment records
   const plans = [
-    { name: "Starter Plan - 1.6%", rate: "1.60", days: 90, amount: "100000.00", earnings: "48000.00" },
+    { name: "Starter Plan - 0.16%", rate: "0.16", days: 90, amount: "100000.00", earnings: "48000.00" },
     { name: "Growth Plan - 0.50%", rate: "0.50", days: 180, amount: "200000.00", earnings: "36750.50" },
     { name: "Premium Plan - 1.2%", rate: "1.20", days: 60, amount: "200000.00", earnings: "0.00" },
   ];
@@ -156,7 +156,7 @@ export async function seedDemoData() {
   await db.insert(supportTickets).values({ id: generateId(), userId: demoId, subject: "KYC verification pending", message: "Submitted KYC documents 2 days ago, still pending.", status: "open", priority: "medium", createdAt: new Date(Date.now()-1*24*60*60*1000), updatedAt: new Date() });
 
   // Configs
-  await db.insert(calculationConfigs).values({ id: generateId(), name: "Standard Daily 1.6%", ratePercent: "1.60", ratePeriod: "daily", minAmount: "10000.00", maxAmount: "1000000.00", effectiveFrom: new Date(), eligibility: "All verified users", version: 1, approved: true });
+  await db.insert(calculationConfigs).values({ id: generateId(), name: "Standard Daily 0.16%", ratePercent: "0.16", ratePeriod: "daily", minAmount: "10000.00", maxAmount: "1000000.00", effectiveFrom: new Date(), eligibility: "All verified users", version: 1, approved: true });
   await db.insert(calculationConfigs).values({ id: generateId(), name: "Premium 0.50% Compound", ratePercent: "0.50", ratePeriod: "daily", minAmount: "50000.00", maxAmount: "5000000.00", effectiveFrom: new Date(), eligibility: "Premium members only", version: 1, approved: true });
 
   const demoConfigs = await db.select().from(calculationConfigs);
@@ -166,7 +166,7 @@ export async function seedDemoData() {
   ]);
 
   for (const [index, payment] of [
-    { amount: "100000.00", status: "paid", plan: "Starter Plan - 1.6%", rate: "1.60", days: 90, age: 25 },
+    { amount: "100000.00", status: "paid", plan: "Starter Plan - 0.16%", rate: "0.16", days: 90, age: 25 },
     { amount: "200000.00", status: "created", plan: "Growth Plan - 0.50%", rate: "0.50", days: 180, age: 2 },
   ].entries()) {
     const createdAt = new Date(Date.now() - payment.age * 86400000);

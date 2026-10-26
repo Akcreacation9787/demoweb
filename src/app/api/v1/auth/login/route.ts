@@ -11,7 +11,14 @@ export async function POST(req: NextRequest) {
     const found = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
     if (!found.length) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     const user = found[0];
-    if (user.accountStatus === "suspended") return NextResponse.json({ error: "Account suspended" }, { status: 403 });
+    if (user.accountStatus !== "active") {
+      const message = user.accountStatus === "suspended"
+        ? "Account suspended. Contact support for help."
+        : user.accountStatus === "pending_verification"
+          ? "Account is pending verification. Contact support for help."
+          : "This account is closed. Contact support for help.";
+      return NextResponse.json({ error: message }, { status: 403 });
+    }
     const ok = await verifyPassword(password, user.passwordHash);
     if (!ok) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     const token = signToken({ userId: user.id, email: user.email, role: user.role });

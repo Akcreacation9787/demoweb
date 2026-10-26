@@ -50,8 +50,8 @@ export default function RegisterClient() {
           <h2 className="text-2xl font-bold text-[#062D66] text-center">Create account</h2><p className="text-center text-sm text-slate-500 mt-1">Start your ATER journey today</p>
           <form onSubmit={handle} className="mt-6 space-y-4">
             <div><Label>Full Name</Label><Input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required /></div>
-            <div><Label>Email</Label><Input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required /></div>
             <div><Label>Phone / WhatsApp</Label><Input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="+91 98765 43210" autoComplete="tel" /></div>
+            <div><Label>Email</Label><Input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required /></div>
             <div><Label>Password (min 6 chars)</Label><Input type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} required /></div>
             <div><Label>Referral Code (optional)</Label><Input value={form.referralCode} onChange={e=>setForm({...form,referralCode:e.target.value})} placeholder="e.g. RAJ2026" /></div>
             <div className="border-t pt-4">
@@ -67,20 +67,9 @@ export default function RegisterClient() {
                 </div>
               </div>
             </div>
-            <div className="border-t pt-4">
-              <h3 className="font-semibold text-[#062D66]">Identity verification</h3>
-              <div className="mt-3 space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div><Label>ID type</Label><select name="idType" required className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"><option value="">Choose ID type</option><option value="passport">Passport</option><option value="national_id">National ID</option><option value="driving_license">Driving licence</option><option value="pan">PAN</option><option value="other">Other</option></select></div>
-                  <div><Label>ID number</Label><Input name="idNumber" autoComplete="off" required /></div>
-                </div>
-                <div><Label>ID proof file (PDF, JPG, PNG; max 5 MB)</Label><Input name="idProof" type="file" accept="application/pdf,image/jpeg,image/png" required /></div>
-                <p className="text-xs text-slate-500">Your proof is stored in a private storage bucket and is not shared through WhatsApp.</p>
-              </div>
-            </div>
             <label className="flex items-start gap-2 text-sm text-slate-600">
               <input name="whatsappConsent" type="checkbox" value="true" className="mt-1" />
-              <span>Send my generated customer/member ID to my WhatsApp number after registration. My government ID number and proof will not be sent.</span>
+              <span>Send my generated customer/member ID to my WhatsApp number after registration.</span>
             </label>
             {error && <div className="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700">{error}</div>}
             {notice && <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">{notice}<Button type="button" onClick={()=>router.push("/dashboard")} className="mt-3 w-full bg-[#062D66]">Continue to dashboard</Button></div>}

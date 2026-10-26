@@ -212,9 +212,35 @@ export const paymentOrders = mysqlTable("payment_orders", {
 
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
-  wallet: one(walletAccounts, { fields: [users.id], references: [walletAccounts.userId] }),
-  profile: one(userProfiles, { fields: [users.id], references: [userProfiles.userId] }),
-  referralsGiven: many(referralRelationships),
+  wallet: one(walletAccounts),
+  profile: one(userProfiles),
+  referralsGiven: many(referralRelationships, { relationName: "referrer" }),
+  referralsReceived: many(referralRelationships, { relationName: "referred" }),
   ledger: many(ledgerEntries),
+}));
+
+export const walletAccountsRelations = relations(walletAccounts, ({ one }) => ({
+  user: one(users, { fields: [walletAccounts.userId], references: [users.id] }),
+}));
+
+export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
+  user: one(users, { fields: [userProfiles.userId], references: [users.id] }),
+}));
+
+export const referralRelationshipsRelations = relations(referralRelationships, ({ one }) => ({
+  referrer: one(users, {
+    fields: [referralRelationships.referrerId],
+    references: [users.id],
+    relationName: "referrer",
+  }),
+  referred: one(users, {
+    fields: [referralRelationships.referredId],
+    references: [users.id],
+    relationName: "referred",
+  }),
+}));
+
+export const ledgerEntriesRelations = relations(ledgerEntries, ({ one }) => ({
+  user: one(users, { fields: [ledgerEntries.userId], references: [users.id] }),
 }));
 

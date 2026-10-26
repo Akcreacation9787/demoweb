@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { fetchJson } from "@/lib/api";
-import { Copy, Download, Search, Plus, Eye, Filter, TrendingUp, Wallet, Users, ArrowUpRight, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Send, Globe, Moon, Sun, Languages, Bell } from "lucide-react";
+import { Copy, Download, Search, Plus, Eye, Filter, TrendingUp, Wallet, Users, ArrowUpRight, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Send, Globe, Moon, Sun, Languages, Bell, LogOut } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 declare global {
@@ -18,8 +18,224 @@ declare global {
   }
 }
 
+function DashboardOverview({ dash, withdrawals, team, onCopyReferral, onNavigate }: { dash: any; withdrawals: any[]; team: any; onCopyReferral: () => void; onNavigate: (tab: string) => void }) {
+  const productRows = (dash.investments || []).reduce((rows: { name: string; amount: number; count: number }[], investment: any) => {
+    const name = investment.planName || "Other";
+    const amount = Number(investment.amount) || 0;
+    const row = rows.find(item => item.name === name);
+    if (row) { row.amount += amount; row.count += 1; }
+    else rows.push({ name, amount, count: 1 });
+    return rows;
+  }, []);
+  const maxProductAmount = Math.max(...productRows.map((row: { amount: number }) => row.amount), 1);
+  const pendingWithdrawals = withdrawals.filter(item => item.status === "pending");
+  const pendingAmount = pendingWithdrawals.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const summaryData = [
+    { name: "Invested", value: Number(dash.wallet?.totalInvested) || 0, color: "#0876E8" },
+    { name: "Earnings", value: Number(dash.wallet?.totalEarnings) || 0, color: "#00B894" },
+    { name: "Balance", value: Number(dash.wallet?.balance) || 0, color: "#64748B" },
+  ].filter(item => item.value > 0);
+  const summaryTotal = summaryData.reduce((sum, item) => sum + item.value, 0);
+  const recentTransactions = dash.recentTransactions?.slice(0, 6) || [];
+
+  const metrics = [
+    { label: "My Balance", value: formatCurrency(dash.wallet?.balance || "0"), note: "Available wallet balance", color: "#062D66", icon: Wallet },
+    { label: "Recorded Earnings", value: formatCurrency(dash.wallet?.totalEarnings || "0"), note: `Today ${formatCurrency(dash.todayEarnings || "0")}`, color: "#0876E8", icon: TrendingUp },
+    { label: "Total Investment", value: formatCurrency(dash.wallet?.totalInvested || "0"), note: `${dash.investments?.length || 0} investment records`, color: "#0F766E", icon: ArrowUpRight },
+    { label: "Pending Withdrawals", value: formatCurrency(pendingAmount), note: `${pendingWithdrawals.length} requests pending`, color: "#B45309", icon: Clock },
+  ];
+
+  return (
+    <div className="space-y-4 text-slate-900">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><h2 className="text-xl font-bold tracking-tight">Finance Dashboard</h2><p className="mt-1 text-xs text-slate-500">Your balance, investments, earnings, and recent activity</p></div>
+        <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-xs text-slate-600"><Calendar className="h-3.5 w-3.5" /> Last 7 days <span className="text-slate-300">•</span> Live</div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map(metric => <Card key={metric.label} className="rounded-xl border-slate-200 shadow-none"><CardContent className="p-4">
+          <div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-600">{metric.label}</span><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style={{ color: metric.color, backgroundColor: `${metric.color}14` }}><metric.icon className="h-6 w-6" /></span></div>
+          <div className="mt-3 text-2xl font-bold tracking-tight" style={{ color: metric.color }}>{metric.value}</div>
+          <div className="mt-1 text-[11px] text-slate-500">{metric.note}</div>
+        </CardContent></Card>)}
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-3">
+        <Card className="rounded-xl border-slate-200 shadow-none">
+          <CardHeader className="border-b border-slate-100 px-4 py-3"><CardTitle className="text-sm">Investment Products</CardTitle><p className="text-[11px] text-slate-500">Recorded portfolio by plan</p></CardHeader>
+          <CardContent className="space-y-4 p-4">
+            <div><div className="text-[11px] text-slate-500">Total invested</div><div className="mt-1 text-2xl font-bold">{formatCurrency(dash.wallet?.totalInvested || "0")}</div></div>
+            {productRows.length ? productRows.slice(0, 5).map((row: { name: string; amount: number; count: number }, index: number) => <div key={row.name}>
+              <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px]"><span className="flex min-w-0 items-center gap-2 truncate text-slate-600"><span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: ["#0876E8", "#00B894", "#F59E0B", "#A855F7", "#EC4899"][index % 5] }} />{row.name}</span><span className="font-medium text-slate-800">{formatCurrency(row.amount)}</span></div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full" style={{ width: `${Math.max(4, row.amount / maxProductAmount * 100)}%`, backgroundColor: ["#0876E8", "#00B894", "#F59E0B", "#A855F7", "#EC4899"][index % 5] }} /></div>
+            </div>) : <div className="py-5 text-center text-xs text-slate-500">No investment records yet</div>}
+            <Button variant="outline" size="sm" className="w-full" onClick={() => onNavigate("investments")}>View investment records</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border-slate-200 shadow-none">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 px-4 py-3"><div><CardTitle className="text-sm">Daily Earnings</CardTitle><p className="text-[11px] text-slate-500">Ledger entries from the last 7 days</p></div><Badge variant="success">Live</Badge></CardHeader>
+          <CardContent className="p-4">
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%"><BarChart data={dash.chartData || []} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF3" vertical={false} /><XAxis dataKey="date" tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} /><YAxis tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} tickFormatter={(value) => formatCurrency(value)} width={70} /><Tooltip formatter={(value) => formatCurrency(typeof value === "number" || typeof value === "string" ? value : 0)} /><Bar dataKey="earnings" name="Earnings" fill="#0876E8" radius={[4, 4, 0, 0]} />
+              </BarChart></ResponsiveContainer>
+            </div>
+            <div className="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">Only recorded earnings are shown; simulations are excluded.</div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border-slate-200 shadow-none">
+          <CardHeader className="border-b border-slate-100 px-4 py-3"><CardTitle className="text-sm">Portfolio Summary</CardTitle><p className="text-[11px] text-slate-500">Investments, earnings, and available balance</p></CardHeader>
+          <CardContent className="p-4">
+            <div className="relative mx-auto h-40 w-full max-w-[220px]">
+              <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={summaryData.length ? summaryData : [{ name: "No activity", value: 1, color: "#E2E8F0" }]} dataKey="value" nameKey="name" innerRadius={48} outerRadius={68} paddingAngle={3} stroke="none">{(summaryData.length ? summaryData : [{ name: "No activity", value: 1, color: "#E2E8F0" }]).map((item, index) => <Cell key={item.name} fill={item.color} />)}</Pie><Tooltip formatter={(value) => formatCurrency(typeof value === "number" || typeof value === "string" ? value : 0)} /></PieChart></ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 grid place-items-center"><div className="text-center"><div className="text-[10px] text-slate-500">Combined</div><div className="text-sm font-bold">{formatCurrency(summaryTotal)}</div></div></div>
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">{[
+              { label: "Invested", value: dash.wallet?.totalInvested || "0", color: "#0876E8" },
+              { label: "Earnings", value: dash.wallet?.totalEarnings || "0", color: "#00B894" },
+              { label: "Balance", value: dash.wallet?.balance || "0", color: "#64748B" },
+            ].map(item => <div key={item.label} className="flex items-center justify-between rounded-md bg-slate-50 px-2.5 py-2 text-[10px]"><span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span><span className="font-semibold">{formatCurrency(item.value)}</span></div>)}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-2">
+        <Card className="rounded-xl border-slate-200 shadow-none">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 px-4 py-3"><CardTitle className="text-sm">Recent Transactions</CardTitle><Button variant="outline" size="sm" onClick={() => onNavigate("transactions")}>View all</Button></CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto"><table className="w-full min-w-[540px] text-left text-[11px]"><thead className="text-[10px] text-slate-500"><tr className="border-b"><th className="px-4 py-2.5 font-medium">Transaction</th><th className="px-3 py-2.5 font-medium">Date</th><th className="px-3 py-2.5 font-medium">Type</th><th className="px-4 py-2.5 text-right font-medium">Amount</th></tr></thead><tbody>
+              {recentTransactions.map((transaction: any) => <tr key={transaction.id} className="border-b last:border-0 hover:bg-slate-50"><td className="max-w-[220px] truncate px-4 py-3 font-medium text-slate-800">{transaction.description}</td><td className="whitespace-nowrap px-3 py-3 text-slate-500">{formatDate(transaction.createdAt)}</td><td className="px-3 py-3"><Badge variant={transaction.type === "earning" ? "success" : "outline"}>{transaction.type}</Badge></td><td className={`whitespace-nowrap px-4 py-3 text-right font-semibold ${transaction.type === "withdrawal" ? "text-rose-600" : "text-emerald-600"}`}>{transaction.type === "withdrawal" ? "−" : "+"}{formatCurrency(transaction.amount)}</td></tr>)}
+            </tbody></table></div>
+            {recentTransactions.length === 0 && <div className="py-8 text-center text-xs text-slate-500">No transactions yet</div>}
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+          <Card className="rounded-xl border-slate-200 shadow-none">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 px-4 py-3"><div><CardTitle className="text-sm">Team Overview</CardTitle><p className="text-[11px] text-slate-500">Your referral network</p></div><Users className="h-4 w-4 text-[#0876E8]" /></CardHeader>
+            <CardContent className="p-4"><div className="flex items-end justify-between"><div><div className="text-[11px] text-slate-500">Direct members</div><div className="mt-1 text-2xl font-bold">{dash.directCount || 0}</div></div><div className="text-right"><div className="text-[11px] text-slate-500">Team total</div><div className="mt-1 text-lg font-semibold">{dash.teamStats?.total || 0}</div></div></div><Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => onNavigate("team")}>View team</Button></CardContent>
+          </Card>
+          <Card className="rounded-xl border-slate-200 shadow-none">
+            <CardHeader className="border-b border-slate-100 px-4 py-3"><CardTitle className="text-sm">Referral Link</CardTitle><p className="text-[11px] text-slate-500">Invite members to your team</p></CardHeader>
+            <CardContent className="p-4"><div className="truncate rounded-md bg-slate-50 px-3 py-2 text-[10px] text-slate-600">{dash.referralLink}</div><Button size="sm" className="mt-3 w-full" onClick={onCopyReferral}><Copy className="mr-2 h-3.5 w-3.5" />Copy link</Button></CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FinanceOverview({ dash, withdrawals, transactions, onNavigate }: { dash: any; withdrawals: any[]; transactions: any[]; onNavigate: (tab: string) => void }) {
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const pending = withdrawals.filter(item => item.status === "pending");
+  const pendingTotal = pending.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const activity = transactions.slice(0, 8);
+  const dayMs = 24 * 60 * 60 * 1000;
+  const nextProfitCycleMs = (dash.investments || []).reduce((nearest: number | null, investment: any) => {
+    if (investment.status !== "active") return nearest;
+    const start = new Date(investment.startDate).getTime();
+    const end = new Date(investment.endDate).getTime();
+    if (!Number.isFinite(start) || !Number.isFinite(end) || clockNow < start || clockNow >= end) return nearest;
+    const nextCycleAt = start + (Math.floor((clockNow - start) / dayMs) + 1) * dayMs;
+    if (nextCycleAt > end) return nearest;
+    const remaining = nextCycleAt - clockNow;
+    return nearest === null ? remaining : Math.min(nearest, remaining);
+  }, null);
+  const countdown = nextProfitCycleMs === null ? null : [
+    Math.floor(nextProfitCycleMs / 3_600_000),
+    Math.floor((nextProfitCycleMs % 3_600_000) / 60_000),
+    Math.floor((nextProfitCycleMs % 60_000) / 1000),
+  ].map((part) => String(part).padStart(2, "0")).join(":");
+  const investmentSlices = (dash.investments || []).reduce((slices: { name: string; value: number; color: string; records: number }[], investment: any) => {
+    const name = investment.planName || "Other";
+    const found = slices.find((slice) => slice.name === name);
+    if (found) { found.value += Number(investment.amount) || 0; found.records += 1; }
+    else slices.push({ name, value: Number(investment.amount) || 0, color: ["#087647", "#0876E8", "#7C3AED", "#F59E0B", "#EC4899"][slices.length % 5], records: 1 });
+    return slices;
+  }, []);
+  const investmentTotal = investmentSlices.reduce((sum: number, slice: { value: number }) => sum + slice.value, 0);
+  const cards = [
+    { title: "Investment portfolio", subtitle: "Track your investment records", amount: dash.wallet?.totalInvested || "0", action: "Analyze portfolio", tab: "investments" },
+    { title: "Daily Profit", subtitle: "Recorded earnings", amount: dash.wallet?.totalEarnings || "0", action: "View earnings", tab: "earnings" },
+    { title: "My balance", subtitle: "Wallet overview & available balance", amount: dash.wallet?.balance || "0", action: "See details", tab: "transactions" },
+  ];
+
+  return (
+    <div className="space-y-5 text-slate-900">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <p className="text-sm text-slate-600">Here is the summary of your account activity.</p>
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600"><Calendar className="h-4 w-4" />Last 7 days <Badge variant="success">Live</Badge></div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        {cards.map((card, index) => <Card key={card.title} className={`overflow-hidden rounded-2xl border-slate-200 shadow-none ${index === 2 ? "border-0" : ""}`} style={index === 2 ? { backgroundColor: "#087647", color: "white" } : undefined}>
+          <CardContent className="p-0">
+            <div className={`p-5 ${index === 2 ? "text-white" : ""}`}>
+              <div className="flex items-start justify-between"><div><div className={`text-lg font-semibold ${index === 2 ? "text-white" : "text-slate-900"}`}>{card.title}</div><div className={`mt-1 text-xs ${index === 2 ? "text-white/75" : "text-slate-500"}`}>{card.subtitle}</div></div><div className={`grid h-11 w-11 place-items-center rounded-xl ${index === 2 ? "bg-white/15" : "bg-violet-50"}`}><Wallet className={`h-6 w-6 ${index === 2 ? "text-white" : "text-violet-700"}`} /></div></div>
+              <div className="mt-6 flex items-center gap-2"><div className="text-3xl font-semibold tracking-tight">{formatCurrency(card.amount)}</div>{index === 1 && <Badge variant="success">Today {formatCurrency(dash.todayEarnings || "0")}</Badge>}</div>
+              {index === 1 && <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500"><Clock className="h-3.5 w-3.5" />{countdown ? `Next 24h cycle in ${countdown}` : "Timer starts when an investment is active"}</div>}
+            </div>
+            <button onClick={() => onNavigate(card.tab)} className={`flex w-full items-center justify-between border-t px-5 py-3 text-left text-sm ${index === 2 ? "border-white/15 text-white hover:bg-white/5" : "border-slate-100 text-slate-700 hover:bg-slate-50"}`}>{card.action}<ArrowUpRight className="h-4 w-4" /></button>
+          </CardContent>
+        </Card>)}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.4fr]">
+        <Card className="rounded-2xl border-slate-200 shadow-none">
+          <CardHeader className="flex flex-row items-start justify-between border-b border-slate-100 px-5 py-4"><div><CardTitle className="text-lg">My Wallet</CardTitle><p className="mt-1 text-xs text-slate-500">Account balances in INR</p></div><Wallet className="h-5 w-5 text-emerald-700" /></CardHeader>
+          <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
+            {[
+              { label: "Available balance", value: dash.wallet?.balance || "0", status: "Available", color: "#067647" },
+              { label: "Recorded earnings", value: dash.wallet?.totalEarnings || "0", status: "Ledger verified", color: "#0876E8" },
+              { label: "Total invested", value: dash.wallet?.totalInvested || "0", status: `${dash.investments?.length || 0} records`, color: "#7C3AED" },
+              { label: "Pending withdrawals", value: pendingTotal, status: `${pending.length} requests`, color: "#C2410C" },
+            ].map(item => <div key={item.label} className="rounded-xl bg-slate-50 p-4">
+              <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} /><span className="text-xs font-medium text-slate-600">{item.label}</span></div>
+              <div className="mt-3 text-xl font-semibold tracking-tight">{formatCurrency(item.value)}</div><div className="mt-1 text-[11px]" style={{ color: item.color }}>{item.status}</div>
+            </div>)}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border-slate-200 shadow-none">
+          <CardHeader className="flex flex-wrap flex-row items-center justify-between gap-3 border-b border-slate-100 px-5 py-4"><div><CardTitle className="text-lg">Cash Flow</CardTitle><div className="mt-1 text-3xl font-semibold tracking-tight">{formatCurrency(dash.wallet?.totalEarnings || "0")}</div><p className="mt-1 text-xs text-slate-500">Recorded earnings total</p></div><Badge variant="outline">Last 7 days</Badge></CardHeader>
+          <CardContent className="p-4">
+            <div className="h-64"><ResponsiveContainer width="100%" height="100%"><BarChart data={dash.chartData || []} margin={{ top: 8, right: 10, left: 2, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#EDF1F4" vertical={false} /><XAxis dataKey="date" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} /><YAxis tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} tickFormatter={(value) => formatCurrency(value)} width={76} /><Tooltip formatter={(value) => formatCurrency(typeof value === "number" || typeof value === "string" ? value : 0)} /><Bar dataKey="earnings" name="Earnings" fill="#087647" radius={[8, 8, 0, 0]} maxBarSize={54} />
+            </BarChart></ResponsiveContainer></div>
+            <div className="mt-2 border-t border-slate-100 pt-3 text-xs text-slate-500">Chart uses completed ledger earnings. Simulated calculations are excluded.</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="rounded-2xl border-slate-200 shadow-none">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 px-5 py-4"><div><CardTitle className="text-lg">Investment Portfolio</CardTitle><p className="mt-1 text-xs text-slate-500">Investment amounts by plan</p></div><Button variant="outline" size="sm" onClick={() => onNavigate("investments")}>View investments</Button></CardHeader>
+        <CardContent className="grid items-center gap-4 p-4 sm:grid-cols-[minmax(180px,0.8fr)_1.2fr]">
+          <div className="relative mx-auto h-52 w-full max-w-[260px]">
+            <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={investmentSlices.length ? investmentSlices : [{ name: "No investments", value: 1, color: "#E2E8F0", records: 0 }]} dataKey="value" nameKey="name" innerRadius={58} outerRadius={84} paddingAngle={investmentSlices.length > 1 ? 3 : 0} stroke="none">{(investmentSlices.length ? investmentSlices : [{ name: "No investments", value: 1, color: "#E2E8F0", records: 0 }]).map((slice: any) => <Cell key={slice.name} fill={slice.color} />)}</Pie><Tooltip formatter={(value) => formatCurrency(typeof value === "number" || typeof value === "string" ? value : 0)} /></PieChart></ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 grid place-items-center"><div className="text-center"><div className="text-[11px] text-slate-500">Total invested</div><div className="text-base font-bold">{formatCurrency(investmentTotal)}</div></div></div>
+          </div>
+          <div className="space-y-2">{investmentSlices.length ? investmentSlices.map((slice: any) => <div key={slice.name} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2.5"><div className="min-w-0"><div className="flex items-center gap-2 text-sm font-medium"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: slice.color }} /><span className="truncate">{slice.name}</span></div><div className="pl-[18px] text-[11px] text-slate-500">{slice.records} {slice.records === 1 ? "record" : "records"}</div></div><div className="shrink-0 text-sm font-semibold">{formatCurrency(slice.value)}</div></div>) : <div className="py-8 text-center text-sm text-slate-500">No investment records to chart yet.</div>}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border-slate-200 shadow-none">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 px-5 py-4"><div><CardTitle className="text-lg">Recent Activities</CardTitle><p className="mt-1 text-xs text-slate-500">Latest wallet and investment transactions</p></div><Button variant="outline" size="sm" onClick={() => onNavigate("transactions")}>View all</Button></CardHeader>
+        <CardContent className="p-0"><div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left text-sm"><thead className="bg-slate-50 text-xs text-slate-500"><tr><th className="px-5 py-3 font-medium">Activity</th><th className="px-4 py-3 font-medium">Reference</th><th className="px-4 py-3 font-medium">Date</th><th className="px-4 py-3 font-medium">Type</th><th className="px-4 py-3 font-medium">Status</th><th className="px-5 py-3 text-right font-medium">Amount</th></tr></thead><tbody>
+          {activity.map((item: any) => <tr key={item.id} className="border-t border-slate-100 hover:bg-slate-50"><td className="max-w-[250px] truncate px-5 py-3 font-medium text-slate-800">{item.description}</td><td className="px-4 py-3 text-xs text-slate-500">{item.referenceId}</td><td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{formatDateTime(item.createdAt)}</td><td className="px-4 py-3"><Badge variant={item.type === "earning" ? "success" : "outline"}>{item.type}</Badge></td><td className="px-4 py-3"><Badge variant={item.status === "completed" ? "success" : "warning"}>{item.status}</Badge></td><td className={`whitespace-nowrap px-5 py-3 text-right font-semibold ${item.type === "withdrawal" ? "text-rose-600" : "text-emerald-700"}`}>{item.type === "withdrawal" ? "−" : "+"}{formatCurrency(item.amount)}</td></tr>)}
+        </tbody></table></div>{activity.length === 0 && <div className="py-10 text-center text-sm text-slate-500">No recent activity yet.</div>}</CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [active, setActive] = useState("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -35,13 +251,14 @@ export default function DashboardPage() {
   const [dark, setDark] = useState(false);
   const [calcResult, setCalcResult] = useState<any>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [calcForm, setCalcForm] = useState({ baseAmount: "100000", ratePercent: "1.6", days: "30" });
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [calcForm, setCalcForm] = useState({ baseAmount: "100000", ratePercent: "0.16", days: "30" });
 
   const t = (en:string, ta:string) => lang==="ta" ? ta : en;
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
-  }, [loading, user]);
+  }, [loading, user, router]);
 
   const fetchAll = async () => {
     const d = await fetchJson<any>("/api/v1/dashboard");
@@ -62,7 +279,18 @@ export default function DashboardPage() {
     setTickets(sup.tickets || []);
   };
 
-  useEffect(() => { if (user) fetchAll(); }, [user]);
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+      router.replace("/login");
+    } catch (error) {
+      setLoggingOut(false);
+      alert(error instanceof Error ? error.message : "Could not log out. Please try again.");
+    }
+  };
+
+  useEffect(() => { if (user) void Promise.resolve().then(fetchAll); }, [user]);
 
   // polling for real-time
   useEffect(() => {
@@ -77,9 +305,26 @@ export default function DashboardPage() {
     if (dash?.referralLink) { navigator.clipboard.writeText(dash.referralLink); alert(t("Referral link copied!","பரிந்துரை இணைப்பு நகலெடுக்கப்பட்டது!")); }
   };
 
+  const investmentPlanData = (dash?.investments || []).reduce((groups: { product: string; amount: number; records: number }[], investment: any) => {
+    const product = investment.planName || "Other";
+    const amount = Number(investment.amount) || 0;
+    const group = groups.find(item => item.product === product);
+    if (group) {
+      group.amount += amount;
+      group.records += 1;
+    } else {
+      groups.push({ product, amount, records: 1 });
+    }
+    return groups;
+  }, []);
+
   const handleCalc = async () => {
-    const res = await fetch("/api/v1/calc", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ baseAmount: calcForm.baseAmount, ratePercent: calcForm.ratePercent, days: calcForm.days, isSimulation:true }) });
-    const data = await res.json(); setCalcResult(data); fetchAll();
+    try {
+      const data = await fetchJson<any>("/api/v1/calc", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ baseAmount: calcForm.baseAmount, ratePercent: calcForm.ratePercent, days: calcForm.days, isSimulation:true }) });
+      setCalcResult(data); fetchAll();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Could not calculate the simulation");
+    }
   };
 
   const handleWithdraw = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -89,6 +334,10 @@ export default function DashboardPage() {
     const method = fd.get("method") as string;
     const destination = fd.get("destination") as string;
     const res = await fetch("/api/v1/withdrawals", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ amount, method, destination }) });
+    if (!res.headers.get("content-type")?.toLowerCase().includes("application/json")) {
+      alert(`The server returned an HTML page instead of API JSON (${res.status} ${res.statusText}).`);
+      return;
+    }
     const data = await res.json();
     if (!res.ok) alert(data.error); else { alert(t("Withdrawal requested — pending review","பணம் எடுத்தல் கோரிக்கை — மதிப்பாய்வு நிலுவையில்")); (e.target as HTMLFormElement).reset(); fetchAll(); }
   };
@@ -110,18 +359,20 @@ export default function DashboardPage() {
     const planName = fd.get("planName") as string;
     try {
       if (!(await loadRazorpay())) throw new Error("Could not load the secure payment window");
-      const res = await fetch("/api/v1/payments/orders", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ amount, planName }) });
-      const order = await res.json();
-      if (!res.ok) throw new Error(order.error || "Could not start payment");
+      const order = await fetchJson<any>("/api/v1/payments/orders", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ amount, planName }) });
       const checkout = new window.Razorpay({
         key: order.keyId, amount: order.amount, currency: order.currency, name: order.name,
         description: order.description, order_id: order.orderId,
         prefill: { name: user.name, email: user.email }, theme: { color: "#0876E8" },
         handler: async (response: Record<string, string>) => {
-          const verify = await fetch("/api/v1/payments/verify", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(response) });
-          const result = await verify.json();
+          let result: any;
+          try {
+            result = await fetchJson<any>("/api/v1/payments/verify", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(response) });
+          } catch (error) {
+            setPaymentLoading(false);
+            return alert(error instanceof Error ? error.message : "Payment verification failed");
+          }
           setPaymentLoading(false);
-          if (!verify.ok) return alert(result.error || "Payment verification failed");
           alert(t("Payment verified and investment activated","பணம் சரிபார்க்கப்பட்டு முதலீடு செயல்படுத்தப்பட்டது"));
           fetchAll();
         },
@@ -147,7 +398,7 @@ export default function DashboardPage() {
         {/* Top header */}
         <div className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-4 md:px-6">
           <div>
-            <h1 className="text-lg font-bold text-[#062D66]">{active === "dashboard" ? t("Dashboard Overview","டாஷ்போர்டு") : active.replace("_"," ").replace(/\b\w/g,l=>l.toUpperCase())}</h1>
+            <h1 className="text-lg font-bold text-[#062D66]">{active === "dashboard" ? t("Overview","மேலோட்டம்") : active.replace("_"," ").replace(/\b\w/g,l=>l.toUpperCase())}</h1>
             <p className="hidden text-xs text-slate-500 md:block">{t("Welcome back,","மீண்டும் வரவேற்கிறோம்,")} {user.name} • {formatDate(new Date().toString())}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -157,6 +408,7 @@ export default function DashboardPage() {
               <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} className="h-7 w-7 rounded-full" alt="" />
               <div className="text-sm"><div className="font-semibold leading-none">{user.name}</div><div className="text-xs text-slate-500">{user.email}</div></div>
             </div>
+            <Button variant="outline" size="sm" disabled={loggingOut} onClick={() => void handleLogout()} className="shrink-0 border-rose-200 text-rose-700 hover:bg-rose-50"><LogOut className="mr-1.5 h-4 w-4" /><span className="hidden sm:inline">{loggingOut ? t("Logging out…", "வெளியேறுகிறது…") : t("Logout", "வெளியேறு")}</span></Button>
           </div>
         </div>
 
@@ -174,10 +426,11 @@ export default function DashboardPage() {
             </button>
           )}
           {/* DASHBOARD TAB */}
-          {active==="dashboard" && dash && (
+          {active==="dashboard" && dash && <FinanceOverview dash={dash} withdrawals={withdrawals} transactions={tx} onNavigate={setActive} />}
+          {active==="dashboard_legacy" && dash && (
             <>
               <div className="grid gap-4 md:grid-cols-4">
-                <Card className="border-0 bg-[#062D66] text-white overflow-hidden relative">
+                <Card className="border-0 overflow-hidden relative" style={{ backgroundColor: "#062D66", color: "#FFFFFF" }}>
                   <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10" />
                   <CardContent className="p-5 relative">
                     <div className="flex items-center justify-between"><span className="text-xs tracking-widest text-white/70">{t("TOTAL INVESTMENT","மொத்த முதலீடு")}</span><Wallet className="h-5 w-5 text-white/60" /></div>
@@ -185,7 +438,7 @@ export default function DashboardPage() {
                     <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold"><TrendingUp className="h-3 w-3" /> {t("Recorded • Auditable","பதிவு செய்யப்பட்டது")}</div>
                   </CardContent>
                 </Card>
-                <Card className="border-0 bg-[#0876E8] text-white">
+                <Card className="border-0" style={{ backgroundColor: "#0876E8", color: "#FFFFFF" }}>
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between"><span className="text-xs tracking-widest text-white/80">{t("RECORDED EARNINGS","பதிவு வருவாய்")}</span><TrendingUp className="h-5 w-5 text-white/70" /></div>
                     <div className="mt-3 text-2xl font-extrabold">{formatCurrency(dash.wallet.totalEarnings || "0")}</div>
@@ -214,7 +467,7 @@ export default function DashboardPage() {
                   <CardContent>
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={dash.chartData}><CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" /><XAxis dataKey="date" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} /><Tooltip formatter={(value: number | string, name: string) => [formatCurrency(value), name === "investments" ? t("Invested","முதலீடு") : t("Earnings","வருவாய்")]} labelFormatter={(label, payload) => { const details = payload?.[0]?.payload?.investmentDetails as Array<{ product: string; amount: number }> | undefined; return details?.length ? `${label} • ${details.map(item => `${item.product}: ${formatCurrency(item.amount)}`).join(", ")}` : label; }} /><Area type="monotone" dataKey="earnings" stroke="#0876E8" fill="#DBEAFE" strokeWidth={2} /><Area type="monotone" dataKey="investments" stroke="#062D66" fill="#062D66" fillOpacity={0.05} /></AreaChart>
+                        <AreaChart data={dash.chartData}><CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" /><XAxis dataKey="date" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} /><Tooltip formatter={(value, name) => [formatCurrency(typeof value === "number" || typeof value === "string" ? value : 0), name === "investments" ? t("Invested","முதலீடு") : t("Earnings","வருவாய்")]} labelFormatter={(label, payload) => { const details = payload?.[0]?.payload?.investmentDetails as Array<{ product: string; amount: number }> | undefined; return details?.length ? `${label} • ${details.map(item => `${item.product}: ${formatCurrency(item.amount)}`).join(", ")}` : label; }} /><Area type="monotone" dataKey="earnings" stroke="#0876E8" fill="#DBEAFE" strokeWidth={2} /><Area type="monotone" dataKey="investments" stroke="#062D66" fill="#062D66" fillOpacity={0.05} /></AreaChart>
                       </ResponsiveContainer>
                     </div>
                     <p className="mt-2 text-xs text-slate-500">{t("Hover over the chart to see daily earnings and investment products with their amounts.","தினசரி வருவாய் மற்றும் முதலீட்டு தயாரிப்புகளையும் தொகைகளையும் பார்க்க வரைபடத்தின் மீது நகர்த்தவும்.")}</p>
@@ -240,6 +493,33 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
               </div>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>{t("Investment Amount by Product","தயாரிப்பு வாரியான முதலீட்டு தொகை")}</CardTitle>
+                    <p className="mt-1 text-sm text-slate-500">{t("Recorded investments grouped by plan","திட்டத்தின் அடிப்படையில் பதிவான முதலீடுகள்")}</p>
+                  </div>
+                  <Badge variant="outline">{investmentPlanData.length} {t("products","தயாரிப்புகள்")}</Badge>
+                </CardHeader>
+                <CardContent>
+                  {investmentPlanData.length > 0 ? (
+                    <div className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={investmentPlanData} margin={{ top: 8, right: 12, left: 12, bottom: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                          <XAxis dataKey="product" tick={{ fontSize: 12 }} interval={0} />
+                          <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => formatCurrency(value)} />
+                          <Tooltip formatter={(value) => formatCurrency(typeof value === "number" || typeof value === "string" ? value : 0)} labelFormatter={(label, payload) => `${label} • ${payload?.[0]?.payload?.records || 0} ${t("records","பதிவுகள்")}`} />
+                          <Bar dataKey="amount" name={t("Invested","முதலீடு")} fill="#0876E8" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="grid h-48 place-items-center text-sm text-slate-500">{t("No investment records to chart yet.","வரைபடத்திற்கு முதலீட்டு பதிவுகள் இன்னும் இல்லை.")}</div>
+                  )}
+                </CardContent>
+              </Card>
 
               <div className="grid gap-6 lg:grid-cols-2">
                 <Card>
@@ -278,7 +558,7 @@ export default function DashboardPage() {
               <Card><CardHeader className="flex flex-row items-center justify-between"><CardTitle>{t("Investment Records","முதலீட்டு பதிவுகள்")}</CardTitle><Badge variant="outline">{investments.length} {t("records","பதிவுகள்")}</Badge></CardHeader>
                 <CardContent>
                   <form onSubmit={handleInvestment} className="grid gap-3 md:grid-cols-4 p-4 rounded-xl bg-[#F8FAFC] border">
-                    <div><Label>{t("Plan Name","திட்ட பெயர்")}</Label><Select name="planName" defaultValue="Starter Plan - 1.6%"><option>Starter Plan - 1.6%</option><option>Growth Plan - 0.50%</option><option>Premium Plan - 1.2%</option></Select></div>
+                    <div><Label>{t("Plan Name","திட்ட பெயர்")}</Label><Select name="planName" defaultValue="Starter Plan - 0.16%"><option>Starter Plan - 0.16%</option><option>Growth Plan - 0.50%</option><option>Premium Plan - 1.2%</option></Select></div>
                     <div><Label>{t("Amount (INR)","தொகை")}</Label><Input name="amount" placeholder="100000" required /></div>
                     <div className="flex items-end"><Button type="submit" disabled={paymentLoading} className="w-full bg-[#0876E8]"><Plus className="mr-2 h-4 w-4" />{paymentLoading ? t("Starting payment...","பணம் செலுத்துதல் தொடங்குகிறது...") : t("Pay & Invest","பணம் செலுத்தி முதலீடு செய்யுங்கள்")}</Button></div>
                     <div className="flex items-end text-xs text-slate-500">{t("Secure Razorpay checkout; investment activates after verification","பாதுகாப்பான Razorpay கட்டணம்; சரிபார்ப்புக்குப் பிறகு முதலீடு செயல்படும்")}</div>

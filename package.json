@@ -13,6 +13,7 @@
     "db:seed": "tsx scripts/seed-demo.mjs"
   },
   "dependencies": {
+    "@prisma/adapter-mariadb": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@supabase/supabase-js": "^2.118.0",
     "@types/bcryptjs": "^2.4.6",

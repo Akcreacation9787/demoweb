@@ -5,7 +5,7 @@ import { generateId } from "@/lib/auth";
 import { getRazorpay } from "@/lib/razorpay";
 
 const PLANS: Record<string, { ratePercent: string; durationDays: number }> = {
-  "Starter Plan - 1.6%": { ratePercent: "1.60", durationDays: 90 },
+  "Starter Plan - 0.16%": { ratePercent: "0.16", durationDays: 90 },
   "Growth Plan - 0.50%": { ratePercent: "0.50", durationDays: 90 },
   "Premium Plan - 1.2%": { ratePercent: "1.20", durationDays: 90 },
 };
