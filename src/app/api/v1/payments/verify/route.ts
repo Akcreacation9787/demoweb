@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { getUserFromRequest } from "@/lib/api-auth";
 import { generateId, generateReferenceId } from "@/lib/auth";
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     const investmentId = generateId();
     const now = new Date();
     const endDate = new Date(now.getTime() + paymentOrder.durationDays * 86_400_000);
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const claimed = await tx.paymentOrder.updateMany({ where: { id: paymentOrder.id, status: "created" }, data: { status: "paid", providerPaymentId: paymentId, signature, paidAt: now } });
       if (claimed.count !== 1) return;
       await tx.investmentRecord.create({ data: { id: investmentId, userId: auth.userId, amount: paymentOrder.amount, planName: paymentOrder.planName, ratePercent: paymentOrder.ratePercent, durationDays: paymentOrder.durationDays, status: "active", startDate: now, endDate, ledgerReference: referenceId } });
