@@ -1,6 +1,13 @@
 import "dotenv/config";
-import { seedDemoData } from "../src/lib/seed.ts";
-import { pool } from "../src/db/index.ts";
+
+if (process.env.NODE_ENV === "production") {
+  throw new Error("Demo seeding is disabled in production.");
+}
+
+const [{ seedDemoData }, { pool }] = await Promise.all([
+  import("../src/lib/seed.ts"),
+  import("../src/db/index.ts"),
+]);
 
 try {
   const result = await seedDemoData();
