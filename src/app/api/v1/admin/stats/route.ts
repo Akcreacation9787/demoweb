@@ -65,6 +65,6 @@ export async function GET(req: NextRequest) {
   });
   } catch (error) {
     console.error("Admin dashboard stats query failed", error);
-    return NextResponse.json({ error: "Could not load admin dashboard data. Check the MySQL connection and database schema." }, { status: 503 });
+    return NextResponse.json({ error: "Could not load admin dashboard data. Check the PostgreSQL connection and database schema." }, { status: 503 });
   }
 }

@@ -4,9 +4,9 @@ import { db } from "@/db";
 export async function GET() {
   try {
     await db.execute(sql`SELECT 1`);
-    return NextResponse.json({ ok: true, app: "ATER KOMPANY", database: "mysql" });
+    return NextResponse.json({ ok: true, app: "ATER KOMPANY", database: "postgresql" });
   } catch (e) {
-    console.error("MySQL health check failed", e);
-    return NextResponse.json({ ok: false, database: "mysql" }, { status: 503 });
+    console.error("PostgreSQL health check failed", e);
+    return NextResponse.json({ ok: false, database: "postgresql" }, { status: 503 });
   }
 }

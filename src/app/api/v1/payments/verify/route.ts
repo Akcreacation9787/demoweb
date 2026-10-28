@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       const claimed = await tx.paymentOrder.updateMany({ where: { id: paymentOrder.id, status: "created" }, data: { status: "paid", providerPaymentId: paymentId, signature, paidAt: now } });
       if (claimed.count !== 1) return;
       await tx.investmentRecord.create({ data: { id: investmentId, userId: auth.userId, amount: paymentOrder.amount, planName: paymentOrder.planName, ratePercent: paymentOrder.ratePercent, durationDays: paymentOrder.durationDays, status: "active", startDate: now, endDate, ledgerReference: referenceId } });
-      await tx.ledgerEntry.create({ data: { id: generateId(), referenceId, userId: auth.userId, type: "investment", amount: paymentOrder.amount, status: "completed", description: `Razorpay investment - ${paymentOrder.planName}`, relatedReference: paymentId, metadata: JSON.stringify({ provider: "razorpay", orderId, paymentId }), completedAt: now } });
+      await tx.ledgerEntry.create({ data: { id: generateId(), referenceId, userId: auth.userId, type: "investment", amount: paymentOrder.amount, status: "completed", description: `Razorpay investment - ${paymentOrder.planName}`, relatedReference: paymentId, metadata: { provider: "razorpay", orderId, paymentId }, completedAt: now } });
       await tx.walletAccount.update({ where: { userId: auth.userId }, data: { totalInvested: { increment: paymentOrder.amount }, updatedAt: now } });
     });
     return NextResponse.json({ success: true, investmentId, referenceId });

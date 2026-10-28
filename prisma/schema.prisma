@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 model User {
@@ -45,7 +45,7 @@ model Session {
   id        String   @id @db.VarChar(36)
   userId    String   @map("user_id") @db.VarChar(36)
   token     String   @unique(map: "sessions_token_uq") @db.VarChar(512)
-  expiresAt DateTime @default(now()) @map("expires_at") @db.Timestamp(0)
+  expiresAt DateTime @map("expires_at") @db.Timestamp(0)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
   users     User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "sessions_user_fk")
 
@@ -57,10 +57,14 @@ model UserProfile {
   id          String   @id @db.VarChar(36)
   userId      String   @unique(map: "user_profiles_user_uq") @map("user_id") @db.VarChar(36)
   address     String?  @db.Text
+  addressLine2 String? @map("address_line_2") @db.Text
   city        String?  @db.VarChar(100)
+  state       String?  @db.VarChar(100)
   country     String?  @db.VarChar(100)
   postalCode  String?  @map("postal_code") @db.VarChar(20)
-  idNumber    String?  @map("id_number") @db.VarChar(50)
+  idType      String?  @map("id_type") @db.VarChar(50)
+  idNumber    String?  @map("id_number") @db.VarChar(255)
+  idProofPath String?  @map("id_proof_path") @db.VarChar(512)
   bankName    String?  @map("bank_name") @db.VarChar(100)
   bankAccount String?  @map("bank_account") @db.VarChar(100)
   upiId       String?  @map("upi_id") @db.VarChar(100)
@@ -109,7 +113,7 @@ model LedgerEntry {
   status           TransactionStatus @default(completed)
   description      String?           @db.Text
   relatedReference String?           @map("related_reference") @db.VarChar(32)
-  metadata         String?           @db.LongText
+  metadata         Json?
   createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamp(0)
   completedAt      DateTime?         @map("completed_at") @db.Timestamp(0)
   users            User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ledger_user_fk")
@@ -126,8 +130,8 @@ model InvestmentRecord {
   ratePercent       Decimal  @map("rate_percent") @db.Decimal(5, 2)
   durationDays      Int      @map("duration_days")
   status            String   @default("active") @db.VarChar(20)
-  startDate         DateTime @default(now()) @map("start_date") @db.Timestamp(0)
-  endDate           DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @map("end_date") @db.Timestamp(0)
+  startDate         DateTime @map("start_date") @db.Timestamp(0)
+  endDate           DateTime @map("end_date") @db.Timestamp(0)
   earningsGenerated Decimal  @default(0.00) @map("earnings_generated") @db.Decimal(18, 2)
   ledgerReference   String?  @map("ledger_reference") @db.VarChar(32)
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(0)
@@ -164,7 +168,7 @@ model CalculationConfig {
   ratePeriod          String               @default("daily") @map("rate_period") @db.VarChar(20)
   minAmount           Decimal?             @default(0.00) @map("min_amount") @db.Decimal(18, 2)
   maxAmount           Decimal?             @map("max_amount") @db.Decimal(18, 2)
-  effectiveFrom       DateTime             @default(now()) @map("effective_from") @db.Timestamp(0)
+  effectiveFrom       DateTime             @map("effective_from") @db.Timestamp(0)
   effectiveTo         DateTime?            @map("effective_to") @db.Timestamp(0)
   eligibility         String?              @db.Text
   roundingRule        String?              @default("standard") @map("rounding_rule") @db.VarChar(20)
@@ -185,10 +189,10 @@ model CalculationHistory {
   calculatedAmount    Decimal            @map("calculated_amount") @db.Decimal(18, 2)
   isSimulation        Boolean            @default(false) @map("is_simulation")
   createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamp(0)
-  calculation_configs CalculationConfig? @relation(fields: [configId], references: [id], onUpdate: Restrict, map: "calc_history_config_fk")
+  calculation_configs CalculationConfig? @relation(fields: [configId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "calc_history_config_fk")
   users               User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "calc_history_user_fk")
 
-  @@index([configId], map: "calc_history_config_fk")
+  @@index([configId], map: "calc_history_config_idx")
   @@index([userId], map: "calc_history_user_idx")
   @@map("calculation_history")
 }
@@ -231,10 +235,10 @@ model AuditLog {
   action    String   @db.VarChar(100)
   entity    String   @db.VarChar(100)
   entityId  String?  @map("entity_id") @db.VarChar(36)
-  details   String?  @db.LongText
+  details   Json?
   ipAddress String?  @map("ip_address") @db.VarChar(45)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
-  users     User?    @relation(fields: [actorId], references: [id], onUpdate: Restrict, map: "audit_actor_fk")
+  users     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "audit_actor_fk")
 
   @@index([actorId, createdAt], map: "audit_actor_created_idx")
   @@map("audit_logs")
